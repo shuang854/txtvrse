@@ -172,12 +172,6 @@ class World {
         return this.players.filter((player) => { return player.socket.id == socketId })[0]
     }
 
-    getNearbyPlayers(sender) {
-        var nearbyPlayers = this.players.filter((player) => { return player.room == sender.room && player.name != sender.name })
-        nearbyPlayers.map((player) => sender.notify("Player " + player.name + " is in the area!"))
-        nearbyPlayers.map((player) => player.notify("Player " + sender.name + " is in the area!"))
-    }
-
     getRoomById(id) {
         return this.rooms.filter((room) => { return room.id == id })[0]
     }
@@ -434,7 +428,6 @@ function move(sender, direction) {
     if (success) {
         //sender.notify("went " + direction)
         sender.notify(world.getRoomById(sender.room).getDescription())
-        world.getNearbyPlayers(sender)
     } else {
         sender.notify("cannot go " + direction)
     }
@@ -467,8 +460,10 @@ function drop(sender, item) {
 function perform(text, socketId, world) {
     var sender = world.getPlayerBySocketId(socketId)
     // Parse phrase
-    // TODO: modify default dictionary adding item names when world loads & player names each time this function is called
-    var tokens = lexer(text, defaultDictionary)
+    var dict = world.dictionary
+    dict.nouns = dict.nouns.concat(world.getPlayerNames()) // add in current player names to dictionary
+    
+    var tokens = lexer(text, dict)
     var command = parser(tokens)
     
     if (!command) { // if the command could not be parsed
