@@ -50,7 +50,6 @@
     // Handling response
     
     socket.on("notification", (data) => {
-        console.log("notification: ", data)
         $("#messages").append($("<li>").text(data.message));
     })
 </script>

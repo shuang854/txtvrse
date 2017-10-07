@@ -35,13 +35,11 @@ io.on("connection", (socket) => {
     })
 
     socket.on("register", (data) => {
-        console.log("register: ", data)
         world.addPlayer(data.name, socket)
     })
 
     socket.on("command", (data) => {
-        console.log("command: ", data)
-        
+        game.perform(data.message, socket.id, world)
     })
 })
 

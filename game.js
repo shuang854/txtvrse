@@ -3,7 +3,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 module.exports = {
-    "perform": function(msg, world) { return command(msg, world) },
+    "perform": function(text, senderSocketId, world) { return perform(text, senderSocketId, world) },
     "loadWorld": function(json) { return loadWorld(json) }
 }
 
@@ -66,7 +66,7 @@ class Player {
         this.health = health // number
     }
 
-    tell(text) {
+    notify(text) {
         this.socket.emit("notification", { "message": text })
     }
 
@@ -138,7 +138,6 @@ class World {
     addPlayer(name, socket) {
         var newPlayer = new Player(name, socket, this.startingRooms[Math.floor(Math.random() * this.startingRooms.length)], [], 100)
         this.players.push(newPlayer)
-        newPlayer.tell("connected!")
     }
 
     removePlayer(name) {
@@ -182,16 +181,17 @@ function loadWorld(json) {
 ////////////////////////////////////////////////////////////////////////////////
 
 // DICTIONARY
+defaultDictionary = {
+    "determiners": [],
+    "adjectives": [],
+    "nouns": ["north", "east", "south", "west"],
+    "prepositions": ["with"],
+    "verbs": ["go", "move", "walk", "take", "pick up", "drop", "leave"]
+}
 
-var Ds = [] // ["the", "a"]
-var As = [] // ["large", "small", "blue", "red", "gold"]
-var Ns = ["north", "east", "south", "west", "gun", "knife", "shovel", "pitchfork", "inventory"] // ["sword", "axe", "my", "me"] // & any names
-var Ps = ["with"] // ["in", "on", "at", "to"]
-var Vs = ["go", "move", "walk", "take", "pick up", "drop", "leave", "stab"] // ["say", "yell", "whisper", "go", "take", "give", "pick up", "throw"]
 
-
-function lexer(text, world) {
-    // TODO: invert search direction to search full string to empty string, not empty string to full string
+function lexer(text, dictionary) {
+    // FIXME: invert search direction to search full string to empty string, not empty string to full string
 
     var tokens = []
 
@@ -203,19 +203,19 @@ function lexer(text, world) {
             substr = "" // ignore it
         }
 
-        if (Ds.indexOf(substr) >= 0) { // if string is a determiner
+        if (dictionary.determiners.indexOf(substr) >= 0) { // if string is a determiner
             tokens.push({ "part": "D", "string": substr })
             substr = ""
-        } else if (As.indexOf(substr) >= 0) { // if string is an adjective
+        } else if (dictionary.adjectives.indexOf(substr) >= 0) { // if string is an adjective
             tokens.push({ "part": "A", "string": substr })
             substr = ""
-        } else if (Ns.indexOf(substr) >= 0 || world.playerNames.indexOf(substr) >= 0 || substr.match(/^\".*\"$/)) { // if string is a noun
+        } else if (dictionary.nouns.indexOf(substr) >= 0 || substr.match(/^\".*\"$/)) { // if string is a noun
             tokens.push({ "part": "N", "string": substr })
             substr = ""
-        } else if (Ps.indexOf(substr) >= 0) { // if string is a preposition
+        } else if (dictionary.prepositions.indexOf(substr) >= 0) { // if string is a preposition
             tokens.push({ "part": "P", "string": substr })
             substr = ""
-        } else if (Vs.indexOf(substr) >= 0) { // if string is a verb
+        } else if (dictionary.verbs.indexOf(substr) >= 0) { // if string is a verb
             tokens.push({ "part": "V", "string": substr })
             substr = ""
         }
@@ -224,7 +224,7 @@ function lexer(text, world) {
     return tokens
 }
 
-function parser(tokens, world) {
+function parser(tokens) {
     //console.log("tokens: ", tokens)
 
     var lastValidPhrase = null
@@ -370,35 +370,26 @@ function parsePrepositionalPhrase(tokens) {
 
 // CALL ACTIONS
 
-function invoke(command, name, world) {
-    var response = {
-        message: "The command could not be understood.",
-        scope: "local",
-        playersInRoom: [],
-        room: "",
-        playerId: ""
-    }
-
+function invoke(command, sender, world) {
     if (command != null) {
         switch (command.V.string) {
             case "go":
             case "move":
             case "walk":
                 if (command.NP) {
-                    response = move(name, command.NP.N.string)
-                    console.log(response)
+                    move(name, command.NP.N.string)
                 }
                 break
             case "take":
             case "pick up":
                 if (command.NP) {
-                    response.message = take(name, command.NP.N.string)
+                    take(name, command.NP.N.string)
                 }
                 break
             case "drop":
             case "leave":
                 if (command.NP) {
-                    response.message = drop(name, command.NP.N.string)
+                    drop(name, command.NP.N.string)
                 }
             case "stab":
                 if (command.NP) {
@@ -409,7 +400,7 @@ function invoke(command, name, world) {
                         var weapon = command.PP.NP.N.string
                     }
 
-                    response.message = attack(name, method, target, weapon)
+                    attack(name, method, target, weapon)
                 }
         }
     }
@@ -420,15 +411,6 @@ function invoke(command, name, world) {
 // ACTION LOGIC
 
 function move(name, direction) {
-    // form of response
-    var response = {
-        message: "",
-        scope: "local",
-        playersInRoom: [],
-        room: null,
-        playerId: ""
-    }
-
     // do movement
     var player = world.getPlayerByName(name)
     if (player) {
@@ -508,9 +490,11 @@ function attack(attacker, method, target, weapon = null) {
 // CLI
 ////////////////////////////////////////////////////////////////////////////////
 
-function command(msg, world) {
-    var tokens = lexer(msg.msg, world)
-    var command = parser(tokens, world)
-    var response = invoke(command, msg.name, world)
+function perform(text, socketId, world) {
+    var sender = world.getPlayerBySocketId(socketId)
+    // TODO: modify default dictionary adding item names & player names
+    var tokens = lexer(text, defaultDictionary)
+    var command = parser(tokens)
+    var response = invoke(command, sender, world)
     return response
 }
