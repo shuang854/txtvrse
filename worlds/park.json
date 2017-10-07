@@ -1,0 +1,60 @@
+{
+    "name": "city",
+    "startingRooms": [0, 2],
+    "rooms": [
+        {
+            "id": 0,
+            "name": "park gate",
+            "description": "You find yourself under a large gate, the entrance to the city park.",
+            "doors": [
+                {"direction": "west", "room": 1},
+                {"direction": "north", "room": 2},
+                {"direction": "east", "room": 3}],
+            "items": [
+                {"id": 2, "name": "knife"}]},
+        {
+            "id": 1,
+            "name": "work area",
+            "description": "You are standing in a work area, there are numerous tools strewn about.",
+            "doors": [
+                {"direction": "west", "room": 4},
+                {"direction": "north", "room": 2},
+                {"direction": "east", "room": 0}],
+            "items": [
+                {"id": 0, "name": "shovel"},
+                {"id": 1, "name": "pitchfork"}]},
+        {
+            "id": 2,
+            "name": "pond",
+            "description": "You are at the edge of a small pond, surrounded by reeds.",
+            "doors": [
+                {"direction": "west", "room": 1},
+                {"direction": "east", "room": 3},
+                {"direction": "south", "room": 0}],
+            "items": []},
+        {
+            "id": 3,
+            "name": "grove",
+            "description": "You are in the park grove. There are tall trees all around you. You hear a few birds chirping.",
+            "doors": [
+                {"direction": "north", "room": 2},
+                {"direction": "east", "room": 5},
+                {"direction": "west", "room": 0}],
+            "items": []},
+        {
+            "id": 4,
+            "name": "shed",
+            "description": "You are in an old, worn down shed. It smells pretty musty.",
+            "doors": [
+                {"direction": "east", "room": 1}],
+            "items": []},
+        {
+            "id": 5,
+            "name": "lake shore",
+            "description": "You are standing on the shore of a medium sized lake. You think you can see some fish down in the rocks.",
+            "doors": [
+                {"direction": "west", "room": 3}],
+            "items": []}
+    ],
+    "players": []
+}
