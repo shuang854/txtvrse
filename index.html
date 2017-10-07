@@ -44,6 +44,8 @@
     // Sending
     $("#prompt").submit(() => {
         socket.emit("command", { "message": $("#m").val() })
+        // TODO: clear text input
+        // TODO: add functionality for up button to look at command history
         return false // don't refresh page
     })
     

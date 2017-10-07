@@ -377,113 +377,56 @@ function invoke(command, sender, world) {
             case "move":
             case "walk":
                 if (command.NP) {
-                    move(name, command.NP.N.string)
+                    move(sender, command.NP.N.string)
                 }
                 break
             case "take":
             case "pick up":
                 if (command.NP) {
-                    take(name, command.NP.N.string)
+                    take(sender, command.NP.N.string)
                 }
                 break
             case "drop":
             case "leave":
                 if (command.NP) {
-                    drop(name, command.NP.N.string)
+                    drop(sender, command.NP.N.string)
                 }
-            case "stab":
-                if (command.NP) {
-                    var method = command.V.string
-                    var target = command.NP.N.string
-                    var weapon = null
-                    if (command.PP && command.PP.P.string == "with" && command.PP.NP) {
-                        var weapon = command.PP.NP.N.string
-                    }
-
-                    attack(name, method, target, weapon)
-                }
+            default:
+                sender.notify("that command has not been programmed yet")
         }
     }
-
-    return response
 }
 
 // ACTION LOGIC
 
-function move(name, direction) {
-    // do movement
-    var player = world.getPlayerByName(name)
-    if (player) {
-        var success = player.move(direction)
-    } else {
-        var success = false
-    }
-
+function move(sender, direction) {
+    var success = sender.move(direction)
+    
     if (success) {
-        // tell world about it
-        response.playerId = player.socketId
-        response.playersInRoom = world.players.filter((p) => { return p.room == player.room }).map((p) => { return p.name })
-        response.room = player.room
-        console.log(response.playersInRoom)
-
-        response.message = "went " + direction
+        sender.notify("went " + direction)
     } else {
-        response.message = "cannot go " + direction
-    }
-
-    return response
-}
-
-function take(name, item) {
-    var player = world.getPlayerByName(name)
-    if (player) {
-        var success = player.take(item)
-    } else {
-        var success = false
-    }
-
-    if (success) {
-        return "took " + item
-    } else {
-        return item + " not in room"
+        sender.notify("cannot go " + direction)
     }
 }
 
-function drop(name, item) {
-    var player = world.getPlayerByName(name)
-    if (player) {
-        var success = player.drop(item)
-    } else {
-        var success = false
-    }
+function take(sender, item) {
+    var success = sender.take(item)
 
     if (success) {
-        return "dropped " + item
+        sender.notify("took " + item)
     } else {
-        return "you have no such items to drop"
+        sender.notify(item + " not in room")
     }
 }
 
-function attack(attacker, method, target, weapon = null) {
-    console.log(attacker + " attacking " + target + " with " + weapon)
-    var a = world.getPlayerByName(attacker)
-    var t = world.getPlayerByName(target)
+function drop(sender, item) {
+    var success = sender.drop(item)
 
-    var how = ""
-
-    switch (method) {
-        case "stab":
-            t.damage(20)
-            if (t.health <= 0) {
-                world.removePlayer(target)
-                // TODO: tell t that their dead
-                return target + " was stabbed to death"
-            }
-            how = "stabbed"
-            break
+    if (success) {
+        sender.notify("dropped " + item)
+    } else {
+        sender.notify("you have no such items to drop")
     }
-
-    return how + " " + target
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -492,9 +435,15 @@ function attack(attacker, method, target, weapon = null) {
 
 function perform(text, socketId, world) {
     var sender = world.getPlayerBySocketId(socketId)
-    // TODO: modify default dictionary adding item names & player names
+    // Parse phrase
+    // TODO: modify default dictionary adding item names when world loads & player names each time this function is called
     var tokens = lexer(text, defaultDictionary)
     var command = parser(tokens)
-    var response = invoke(command, sender, world)
-    return response
+    
+    if (!command) { // if the command could not be parsed
+        sender.notify("command could not be parsed")
+    }
+    
+    // run command
+    invoke(command, sender, world)
 }
