@@ -435,10 +435,10 @@ function move(name, direction) {
     
     if (success) {
         // tell world about it
-        response.playerId = player.socketId;
+        response.playerId = player.socketId
         response.playersInRoom = world.players.filter((p) => {return p.room == player.room}).map((p) => {return p.name})
-        response.room = player.room;
-        console.log(response.playersInRoom);        
+        response.room = player.room
+        console.log(response.playersInRoom)        
         
         response.message = "went " + direction
     } else {
@@ -494,7 +494,7 @@ function attack(attacker, method, target, weapon=null) {
                 return target + " was stabbed to death"
             }
             how = "stabbed"
-            break;
+            break
     }
     
     return how + " " + target
