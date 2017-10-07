@@ -4,7 +4,7 @@ var http = require("http").Server(app);
 var io = require("socket.io")(http);
 var game = require("./game.js");
 
-var port = process.envPORT || 3001;
+var port = process.env.PORT || 3001;
 
 app.get("/", function(req, res) {
     res.sendFile(__dirname + "/index.html");
