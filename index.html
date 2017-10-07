@@ -44,7 +44,7 @@
     // Sending
     $("#prompt").submit(() => {
         socket.emit("command", { "message": $("#m").val() })
-        // TODO: clear text input
+        $("#m").val("")
         // TODO: add functionality for up button to look at command history
         return false // don't refresh page
     })
@@ -53,6 +53,7 @@
     
     socket.on("notification", (data) => {
         $("#messages").append($("<li>").text(data.message));
+        $("#messages").scrollTop($("#messages").prop("scrollHeight")); // auto scroll
     })
 </script>
 

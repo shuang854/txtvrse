@@ -37,6 +37,18 @@ class Room {
     removeItem(itemId) {
         this.items = this.items.filter((item) => { return item.id != itemId })
     }
+
+    getDescription() {
+        var itemList = "Items in area: "
+        if (this.items.length > 0) {
+            this.items.map((item) => { itemList = itemList + item.name + ", " })
+            itemList = itemList.substr(0, itemList.length-2)
+        } else {
+            itemList = itemList + "none"
+        }
+
+        return this.description + " " + itemList
+    }
 }
 
 class Door {
@@ -146,7 +158,7 @@ class World {
         this.players = this.players.filter((p) => { return p.name != name })
     }
 
-    get playerNames() {
+    getPlayerNames() {
         return this.players.map((player) => { return player.name })
     }
 
@@ -404,6 +416,7 @@ function move(sender, direction) {
     
     if (success) {
         sender.notify("went " + direction)
+        sender.notify(world.getRoomById(sender.room).getDescription())
     } else {
         sender.notify("cannot go " + direction)
     }
