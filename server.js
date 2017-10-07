@@ -18,7 +18,7 @@ var world = game.loadWorld(testworld);
 ////////////////////////////////////////////////////////////////////////////////
 
 io.on("connection", function(socket) {
-
+    
     socket.on("disconnect", function() {
         var player = world.getPlayerBySocketId(socket.id);
         if (player) {
