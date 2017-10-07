@@ -1,2 +1,2 @@
-# text-game
+# txtvrse
 Multiplayer text-based game
