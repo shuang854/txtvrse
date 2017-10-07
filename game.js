@@ -3,8 +3,8 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 module.exports = {
-    "perform": function (msg, world) {return command(msg, world)},
-    "loadWorld": function (json) {return loadWorld(json)}
+    "perform": function(msg, world) { return command(msg, world) },
+    "loadWorld": function(json) { return loadWorld(json) }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -25,17 +25,17 @@ class Room {
         this.doors = doors // list of door objects
         this.items = items // list of item objects
     }
-    
+
     addItem(item) {
         this.items.push(item)
     }
-    
+
     getItemById(itemId) {
-        return this.items.filter((item) => {return item.id == itemId})[0]
+        return this.items.filter((item) => { return item.id == itemId })[0]
     }
-    
+
     removeItem(itemId) {
-        this.items = this.items.filter((item) => {return item.id != itemId})
+        this.items = this.items.filter((item) => { return item.id != itemId })
     }
 }
 
@@ -44,7 +44,7 @@ class Door {
         this.direction = direction // unique
         this.room = room // room id
     }
-    
+
     traverse(player) {
         player.room = this.room
     }
@@ -58,34 +58,38 @@ class Item {
 }
 
 class Player {
-    constructor(name, socketId, room, inventory, health) {
+    constructor(name, socket, room, inventory, health) {
         this.name = name // unique
-        this.socketId = socketId // socket.id
+        this.socket = socket // socket connection
         this.room = room // room id
         this.inventory = inventory // list of item objects
         this.health = health // number
     }
-    
+
+    tell(text) {
+        this.socket.emit("notification", { "message": text })
+    }
+
     addItem(item) {
         this.inventory.push(item)
     }
-    
+
     removeItem(itemId) {
-        this.inventory = this.inventory.filter((item) => {return item.id != itemId})
+        this.inventory = this.inventory.filter((item) => { return item.id != itemId })
     }
-    
+
     damage(amount) {
         this.health = this.health - amount
     }
-    
+
     heal(amount) {
         this.health = this.health + amount
     }
-    
+
     // ACTIONS
-    
+
     move(direction) {
-        var doors = world.getRoomById(this.room).doors.filter((door) => {return door.direction == direction})
+        var doors = world.getRoomById(this.room).doors.filter((door) => { return door.direction == direction })
         if (doors.length == 1) {
             doors[0].traverse(this)
             return true
@@ -93,10 +97,10 @@ class Player {
             return false
         }
     }
-    
+
     take(itemName) {
         var room = world.getRoomById(this.room)
-        var items = room.items.filter((i) => {return i.name == itemName})
+        var items = room.items.filter((i) => { return i.name == itemName })
         if (items.length >= 1) {
             room.removeItem(items[0].id)
             this.addItem(items[0])
@@ -105,20 +109,20 @@ class Player {
             return false
         }
     }
-    
+
     drop(itemName) {
         var itemsToDrop = []
         if (itemName == "inventory") {
             itemsToDrop = this.inventory
         } else {
-            itemsToDrop = this.inventory.filter((i) => {return i.name == itemName})
+            itemsToDrop = this.inventory.filter((i) => { return i.name == itemName })
         }
-        
+
         itemsToDrop.forEach((i) => {
             this.removeItem(i.id)
             world.getRoomById(this.room).addItem(i)
         })
-        
+
         return itemsToDrop.length > 0
     }
 }
@@ -130,33 +134,33 @@ class World {
         this.rooms = rooms
         this.players = []
     }
-    
-    addPlayer(name, socketId) {
-        var newPlayer = new Player(name, socketId, this.startingRooms[Math.floor(Math.random() * this.startingRooms.length)], [], 100)
+
+    addPlayer(name, socket) {
+        var newPlayer = new Player(name, socket, this.startingRooms[Math.floor(Math.random() * this.startingRooms.length)], [], 100)
         this.players.push(newPlayer)
-        return newPlayer
+        newPlayer.tell("connected!")
     }
-    
+
     removePlayer(name) {
         var player = this.getPlayerByName(name)
         player.drop("inventory")
-        this.players = this.players.filter((p) => {return p.name != name})
+        this.players = this.players.filter((p) => { return p.name != name })
     }
-    
+
     get playerNames() {
-        return this.players.map((player) => {return player.name})
+        return this.players.map((player) => { return player.name })
     }
-    
+
     getPlayerByName(name) {
-        return this.players.filter((player) => {return player.name == name})[0]
+        return this.players.filter((player) => { return player.name == name })[0]
     }
-    
+
     getPlayerBySocketId(socketId) {
-        return this.players.filter((player) => {return player.socketId == socketId})[0]
+        return this.players.filter((player) => { return player.socket.id == socketId })[0]
     }
-    
+
     getRoomById(id) {
-        return this.rooms.filter((room) => {return room.id == id})[0]
+        return this.rooms.filter((room) => { return room.id == id })[0]
     }
 }
 
@@ -188,45 +192,45 @@ var Vs = ["go", "move", "walk", "take", "pick up", "drop", "leave", "stab"] // [
 
 function lexer(text, world) {
     // TODO: invert search direction to search full string to empty string, not empty string to full string
-    
+
     var tokens = []
-    
+
     var substr = ""
     for (var i = 0; i < text.length; i++) {
         substr = substr + text[i]
-        
+
         if (substr.match(/^\s+$/)) { // if substring consists of only whitespace characters (a.k.a. is between a word)
             substr = "" // ignore it
         }
-        
+
         if (Ds.indexOf(substr) >= 0) { // if string is a determiner
-            tokens.push({"part": "D", "string": substr})
+            tokens.push({ "part": "D", "string": substr })
             substr = ""
         } else if (As.indexOf(substr) >= 0) { // if string is an adjective
-            tokens.push({"part": "A", "string": substr})
+            tokens.push({ "part": "A", "string": substr })
             substr = ""
         } else if (Ns.indexOf(substr) >= 0 || world.playerNames.indexOf(substr) >= 0 || substr.match(/^\".*\"$/)) { // if string is a noun
-            tokens.push({"part": "N", "string": substr})
+            tokens.push({ "part": "N", "string": substr })
             substr = ""
         } else if (Ps.indexOf(substr) >= 0) { // if string is a preposition
-            tokens.push({"part": "P", "string": substr})
+            tokens.push({ "part": "P", "string": substr })
             substr = ""
         } else if (Vs.indexOf(substr) >= 0) { // if string is a verb
-            tokens.push({"part": "V", "string": substr})
+            tokens.push({ "part": "V", "string": substr })
             substr = ""
         }
     }
-    
+
     return tokens
 }
 
 function parser(tokens, world) {
     //console.log("tokens: ", tokens)
-    
+
     var lastValidPhrase = null
-    var combinedList = [tokens[tokens.length-1]]
+    var combinedList = [tokens[tokens.length - 1]]
     //console.log("combinedList: ", combinedList)
-    var i = tokens.length-1
+    var i = tokens.length - 1
     while (combinedList[0]) {
         //console.log("----------------")
         var VPattempt = parseVerbPhrase(combinedList)
@@ -234,11 +238,11 @@ function parser(tokens, world) {
         var PPattempt = parsePrepositionalPhrase(combinedList)
         var phraseAttempt = VPattempt || NPattempt || PPattempt
         //console.log("phraseAttempt: ", phraseAttempt)
-        
+
         if (phraseAttempt != null) { // tokens in combinedList are a valid phrase
             //console.log("---- Valid Phrase ----")
             lastValidPhrase = phraseAttempt // save that phrase as the current best
-            combinedList.unshift(tokens[i-1]) // add the word before to the beginning of the combinedList
+            combinedList.unshift(tokens[i - 1]) // add the word before to the beginning of the combinedList
             i-- // update index
         } else if (phraseAttempt == null && lastValidPhrase != null) { // tokens in combinedList are not a valid phrase
             //console.log("---- Invalid Phrase ----")
@@ -247,11 +251,11 @@ function parser(tokens, world) {
             //console.log("---- Malformed Phrase ----")
             return null // it's an invalid phrase as a whole
         }
-        
+
         //console.log("combinedList: ", combinedList)
     }
     //console.log("----------------")
-    
+
     //console.log("L: ", combinedList.length)
     if (lastValidPhrase != null && combinedList.length >= 3 && lastValidPhrase.part == "VP") {
         return lastValidPhrase
@@ -264,37 +268,37 @@ function parser(tokens, world) {
 
 function parseVerbPhrase(tokens) {
     var phrase = null
-    
+
     // V
     // V NP
     // V NP PP
     // V PP
-    
+
     switch (tokens.length) {
         case 1:
             if (tokens[0].part == "V") { // V
-                phrase = {"part": "VP", "V": tokens[0], "NP": null, "PP": null}
+                phrase = { "part": "VP", "V": tokens[0], "NP": null, "PP": null }
             }
             break
         case 2:
             if (tokens[0].part == "V" && tokens[1].part == "NP") { // V NP
-                phrase = {"part": "VP", "V": tokens[0], "NP": tokens[1], "PP": null}
-            } else if (tokens[0].part == "V" && tokens[1].part == "PP"){ // V PP
-                phrase = {"part": "VP", "V": tokens[0], "NP": null, "PP": tokens[1]}
+                phrase = { "part": "VP", "V": tokens[0], "NP": tokens[1], "PP": null }
+            } else if (tokens[0].part == "V" && tokens[1].part == "PP") { // V PP
+                phrase = { "part": "VP", "V": tokens[0], "NP": null, "PP": tokens[1] }
             }
             break
         case 3:
             if (tokens[0].part == "V" && tokens[1].part == "NP" && tokens[2].part == "PP") { // V NP PP
-                phrase = {"part": "VP", "V": tokens[0], "NP": tokens[1], "PP": tokens[2]}
+                phrase = { "part": "VP", "V": tokens[0], "NP": tokens[1], "PP": tokens[2] }
             }
     }
-    
+
     return phrase
 }
 
 function parseNounPhrase(tokens) {
     var phrase = null
-    
+
     // N
     // D N
     // A N
@@ -303,60 +307,60 @@ function parseNounPhrase(tokens) {
     // D N PP
     // A N PP
     // D A N PP
-    
+
     switch (tokens.length) {
         case 1:
             if (tokens[0].part == "N") { // N
-                phrase = {"part": "NP", "D": null, "A": null, "N": tokens[0], "PP": null}
+                phrase = { "part": "NP", "D": null, "A": null, "N": tokens[0], "PP": null }
             }
             break
         case 2:
             if (tokens[0].part == "D" && tokens[1].part == "N") { // D N
-                phrase = {"part": "NP", "D": tokens[0], "A": null, "N": tokens[1], "PP": null}
+                phrase = { "part": "NP", "D": tokens[0], "A": null, "N": tokens[1], "PP": null }
             } else if (tokens[0].part == "A" && tokens[1].part == "N") { // A N
-                phrase = {"part": "NP", "D": null, "A": tokens[0], "N": tokens[1], "PP": null}
+                phrase = { "part": "NP", "D": null, "A": tokens[0], "N": tokens[1], "PP": null }
             } else if (tokens[0].part == "N" && tokens[1].part == "PP") {
-                phrase = {"part": "NP", "D": null, "A": null, "N": tokens[0], "PP": tokens[1]}
+                phrase = { "part": "NP", "D": null, "A": null, "N": tokens[0], "PP": tokens[1] }
             }
             break
         case 3:
             if (tokens[0].part == "D" && tokens[1].part == "A" && tokens[2].part == "N") { // D A N
-                phrase = {"part": "NP", "D": tokens[0], "A": tokens[1], "N": tokens[2], "PP": null}
+                phrase = { "part": "NP", "D": tokens[0], "A": tokens[1], "N": tokens[2], "PP": null }
             } else if (tokens[0].part == "D" && tokens[1].part == "N" && tokens[2].part == "PP") { // D N PP
-                phrase = {"part": "NP", "D": tokens[0], "A": null, "N": tokens[1], "PP": tokens[2]}
+                phrase = { "part": "NP", "D": tokens[0], "A": null, "N": tokens[1], "PP": tokens[2] }
             } else if (tokens[0].part == "A" && tokens[1].part == "N" && tokens[2].part == "PP") { // A N PP
-                phrase = {"part": "NP", "D": null, "A": tokens[0], "N": tokens[1], "PP": tokens[2]}
+                phrase = { "part": "NP", "D": null, "A": tokens[0], "N": tokens[1], "PP": tokens[2] }
             }
             break
         case 4:
             if (tokens[0].part == "D" && tokens[1].part == "A" && tokens[2].part == "N" && tokens[3].part == "PP") { // D A N PP
-                phrase = {"part": "NP", "D": tokens[0], "A": tokens[1], "N": tokens[2], "PP": tokens[3]}
+                phrase = { "part": "NP", "D": tokens[0], "A": tokens[1], "N": tokens[2], "PP": tokens[3] }
             }
             break
     }
-    
+
     return phrase
 }
 
 function parsePrepositionalPhrase(tokens) {
     var phrase = null
-    
+
     // P
     // P PP
-    
+
     switch (tokens.length) {
         case 1:
             if (tokens[0].part == "P") { // P
-                phrase = {"part": "PP", "P": tokens[0], "NP": null}
+                phrase = { "part": "PP", "P": tokens[0], "NP": null }
             }
             break
         case 2:
             if (tokens[0].part == "P" && tokens[1].part == "NP") { // P NP
-                phrase = {"part": "PP", "P": tokens[0], "NP": tokens[1]}
+                phrase = { "part": "PP", "P": tokens[0], "NP": tokens[1] }
             }
             break
     }
-    
+
     return phrase
 }
 
@@ -374,7 +378,7 @@ function invoke(command, name, world) {
         room: "",
         playerId: ""
     }
-    
+
     if (command != null) {
         switch (command.V.string) {
             case "go":
@@ -404,12 +408,12 @@ function invoke(command, name, world) {
                     if (command.PP && command.PP.P.string == "with" && command.PP.NP) {
                         var weapon = command.PP.NP.N.string
                     }
-                    
+
                     response.message = attack(name, method, target, weapon)
                 }
         }
     }
-    
+
     return response
 }
 
@@ -424,7 +428,7 @@ function move(name, direction) {
         room: null,
         playerId: ""
     }
-    
+
     // do movement
     var player = world.getPlayerByName(name)
     if (player) {
@@ -432,19 +436,19 @@ function move(name, direction) {
     } else {
         var success = false
     }
-    
+
     if (success) {
         // tell world about it
         response.playerId = player.socketId
-        response.playersInRoom = world.players.filter((p) => {return p.room == player.room}).map((p) => {return p.name})
+        response.playersInRoom = world.players.filter((p) => { return p.room == player.room }).map((p) => { return p.name })
         response.room = player.room
-        console.log(response.playersInRoom)        
-        
+        console.log(response.playersInRoom)
+
         response.message = "went " + direction
     } else {
         response.message = "cannot go " + direction
     }
-    
+
     return response
 }
 
@@ -455,7 +459,7 @@ function take(name, item) {
     } else {
         var success = false
     }
-    
+
     if (success) {
         return "took " + item
     } else {
@@ -470,7 +474,7 @@ function drop(name, item) {
     } else {
         var success = false
     }
-    
+
     if (success) {
         return "dropped " + item
     } else {
@@ -478,13 +482,13 @@ function drop(name, item) {
     }
 }
 
-function attack(attacker, method, target, weapon=null) {
+function attack(attacker, method, target, weapon = null) {
     console.log(attacker + " attacking " + target + " with " + weapon)
     var a = world.getPlayerByName(attacker)
     var t = world.getPlayerByName(target)
-    
+
     var how = ""
-    
+
     switch (method) {
         case "stab":
             t.damage(20)
@@ -496,7 +500,7 @@ function attack(attacker, method, target, weapon=null) {
             how = "stabbed"
             break
     }
-    
+
     return how + " " + target
 }
 
