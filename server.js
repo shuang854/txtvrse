@@ -21,10 +21,12 @@ io.on("connection", function(socket) {
 
     socket.on("disconnect", function() {
         var player = world.getPlayerBySocketId(socket.id);
-        world.removePlayer(player.name);
-        player.room = null;
-        console.log("-> player " + player.name + " left the server");
-        // TODO: actually delete player object
+        if (player) {
+            world.removePlayer(player.name);
+            player.room = null;
+            console.log("-> player " + player.name + " left the server");
+            // TODO: actually delete player object
+        }
     });
 
     socket.on("command", function(data) {
