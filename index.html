@@ -1,0 +1,74 @@
+<!doctype html>
+<html>
+    <head>
+        <title>Txtvrse</title>
+        <link rel="stylesheet" type="text/css" href="css/interface.css">
+    </head>
+    
+    <body>
+        <div id="intro">
+          <strong>Txtvrse</strong>
+          <br>
+          Username:
+          <form id="user" action=""> 
+              <input id="username" autocomplete="off" /><button id="sub">Submit</button> 
+          </form>
+        </div>
+        <ul id="messages"></ul>
+        <form id="prompt" action="">
+          <input id="m" autocomplete="off" /><button id="send">Send</button>
+        </form>
+    </body>
+    
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
+    <script>
+        $(() => {
+            $("#messages").hide();
+            $("#prompt").hide();
+            $("#user").show();
+
+            var socket = io();
+            var name;
+            var socketId;
+            var currRoom;
+
+            $("#user").submit(function() {
+                $("#messages").show();
+                $("#prompt").show();
+                name = $("#username").val();
+                socket.emit("register", name);
+                $("#intro").hide();
+                return false;
+            });
+
+            /*$("#prompt").submit(function() {
+                socket.emit("command", {"name": name, "msg": $("#m").val()});
+                $("#m").val("");
+                return false;
+            });
+            socket.on("id", function(data) {
+                socketId = data.socket;
+            })
+            
+            socket.on("response", function(data) {
+                $("#messages").append($("<li>").text(data.res.message));
+                $("#messages").scrollTop($("#messages").prop("scrollHeight"));
+                if (data.res.room != null)
+                    currRoom = data.res.room;
+            });
+            socket.on("playerStatus", function(data) {
+                $("#messages").append($("<li>").text("You find yourself in a strange place."));
+                $("#messages").scrollTop($("#messages").prop("scrollHeight"));
+                currRoom = data.room;
+            });
+            socket.on("surroundings", function(data) {
+                if (socketId == data.socket && data.enemy == name)
+                    $("#messages").append($("<li>").text(data.room.description));
+                if (data.enemy != name && currRoom == data.room.id)
+                    $("#messages").append($("<li>").text("Hacker " + data.enemy + " is in the area!"));
+                $("#messages").scrollTop($("#messages").prop("scrollHeight"));
+            });*/
+        });
+    </script>
+</html>

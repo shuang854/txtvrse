@@ -1,0 +1,84 @@
+* { 
+    margin: 0; 
+    padding: 0; 
+    box-sizing: border-box; 
+}
+
+body { 
+    font-size: 16px; 
+    font-family: 'Times New Roman', Times, serif; 
+    background: #eee;
+}
+
+#prompt { 
+    background: #eee; 
+    position: fixed; 
+    left: 12.5%; 
+    bottom: 12.5%; 
+    width: 75%; 
+}
+
+#m {
+    font-size: 16px; 
+    font-family: 'Times New Roman', Times, serif;
+    border: 1px solid black; 
+    padding: 10px; 
+    width: calc(100% - 105px);
+    margin-right: 5px; 
+}
+
+#send { 
+    width: 100px; 
+    background: #eee;
+    font-size: 16px;
+    font-family: 'Times New Roman', Times, serif;
+    border: 1px solid black; 
+    padding: 10px; 
+}
+
+#messages { 
+    list-style-type: none; 
+    top: 12.5%;
+    bottom: calc(12.5% + 45px);
+    border-top: 2px solid black;
+    border-left: 2px solid black;
+    border-right: 2px solid black;
+    left: 12.5%;
+    padding: 0;
+    width: 75%;
+    overflow-y: auto;
+    position: fixed;
+}
+
+#messages li { 
+    padding: 5px 5px;
+    border-bottom-style: solid;
+    border-width: 1px; 
+}
+
+#messages li:nth-child(odd) { 
+    background: white; 
+}
+
+#message {
+    font-size: 16px; 
+    font-family: 'Times New Roman', Times, serif
+}
+
+#intro {
+    font-family: 'Times New Roman', Times, serif; 
+    font-size: 20px; 
+    position: absolute; 
+    top: 50%;
+    left: 50%; 
+    border: none; 
+    transform: translate(-50%, -50%);
+}
+
+#sub {
+    font-family: 'Times New Roman', Times, serif; 
+    border: 1px solid black; 
+    font-size: 16px;
+    padding: 5px;
+    margin-left: 5px;
+}

@@ -15,5 +15,9 @@
   "bugs": {
     "url": "https://github.com/shuang854/text-game/issues"
   },
-  "homepage": "https://github.com/shuang854/text-game#readme"
+  "homepage": "https://github.com/shuang854/text-game#readme",
+  "dependencies": {
+    "express": "^4.16.1",
+    "socket.io": "^2.0.3"
+  }
 }
