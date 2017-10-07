@@ -172,6 +172,12 @@ class World {
         return this.players.filter((player) => { return player.socket.id == socketId })[0]
     }
 
+    getNearbyPlayers(sender) {
+        var nearbyPlayers = this.players.filter((player) => { return player.room == sender.room && player.name != sender.name })
+        nearbyPlayers.map((player) => sender.notify("Player " + player.name + " is in the area!"))
+        nearbyPlayers.map((player) => player.notify("Player " + sender.name + " is in the area!"))
+    }
+
     getRoomById(id) {
         return this.rooms.filter((room) => { return room.id == id })[0]
     }
@@ -428,6 +434,7 @@ function move(sender, direction) {
     if (success) {
         //sender.notify("went " + direction)
         sender.notify(world.getRoomById(sender.room).getDescription())
+        world.getNearbyPlayers(sender)
     } else {
         sender.notify("cannot go " + direction)
     }
