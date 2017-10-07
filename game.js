@@ -140,16 +140,18 @@ class Player {
 }
 
 class World {
-    constructor(name, startingRooms, rooms, players) {
+    constructor(name, startingRooms, rooms, players, dictionary) {
         this.name = name
         this.startingRooms = startingRooms
         this.rooms = rooms
         this.players = []
+        this.dictionary = dictionary
     }
 
     addPlayer(name, socket) {
         var newPlayer = new Player(name, socket, this.startingRooms[Math.floor(Math.random() * this.startingRooms.length)], [], 100)
         this.players.push(newPlayer)
+        newPlayer.notify(this.getRoomById(newPlayer.room).getDescription())
     }
 
     removePlayer(name) {
@@ -178,13 +180,22 @@ class World {
 // WORLD GENERATION
 
 function loadWorld(json) {
+    var itemNames = new Set() // set for uniqueness
+    var itemIdCounter = 0
+    var roomIdCounter = 0
+    
     world = new World(json.name, json.startingRooms, json.rooms.map((room) => {
-        return new Room(room.id, room.name, room.description, room.doors.map((door) => {
+        roomIdCounter++
+        return new Room(roomIdCounter-1, room.name, room.description, room.doors.map((door) => {
             return new Door(door.direction, door.room)
         }), room.items.map((item) => {
-            return new Item(item.id, item.name)
+            itemNames.add(item.name)
+            itemIdCounter++
+            return new Item(itemIdCounter-1, item.name)
         }))
-    }), json.players)
+    }), json.players, defaultDictionary)
+    
+    world.dictionary.nouns = world.dictionary.nouns.concat(Array.from(itemNames))
     return world
 }
 
@@ -415,7 +426,7 @@ function move(sender, direction) {
     var success = sender.move(direction)
     
     if (success) {
-        sender.notify("went " + direction)
+        //sender.notify("went " + direction)
         sender.notify(world.getRoomById(sender.room).getDescription())
     } else {
         sender.notify("cannot go " + direction)
