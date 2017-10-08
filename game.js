@@ -172,11 +172,9 @@ class World {
     getPlayerNames() {
         return this.players.map((player) => { return player.name })
     }
-
-    getNearbyPlayers(sender) {
-        var nearbyPlayers = this.players.filter((player) => { return player.room == sender.room && player.name != sender.name })
-        nearbyPlayers.map((player) => sender.notify("Player " + player.name + " is in the area!"))
-        nearbyPlayers.map((player) => player.notify("Player " + sender.name + " is in the area!"))
+    
+    getPlayersInRoom(roomId) {
+        return this.players.filter((player) => { return player.room == roomId })
     }
 
     getPlayerByName(name) {
@@ -224,7 +222,7 @@ defaultDictionary = {
     "adjectives": [],
     "nouns": ["north", "east", "south", "west"],
     "prepositions": ["with"],
-    "verbs": ["go", "move", "walk", "e", "n", "s", "w", "take", "pick up", "drop", "leave", "stab", "look"]
+    "verbs": ["go", "move", "walk", "e", "n", "s", "w", "take", "pick up", "drop", "leave", "stab", "look", "description", "say"]
 }
 
 
@@ -482,7 +480,13 @@ function invoke(command, sender, world) {
                 //TODO: infinite loop somewhere when typing "stabb player" instead of "stab"?
                 break
             case "look":
+            case "description":
                 sender.notify(world.getRoomById(sender.room).getDescription())
+                break
+            case "say":
+                if (command.NP && command.NP.N.string.match(/^\".*\"$/)) { // if said something in quotations
+                    speak(sender, command.NP.N.string, "local", null)
+                } 
                 break
             default:
                 sender.notify("that command has not been programmed yet")
@@ -493,12 +497,31 @@ function invoke(command, sender, world) {
 // ACTION LOGIC
 
 function move(sender, direction) {
+    var previousRoom = sender.room
+    
     var success = sender.move(direction)
 
     if (success) {
-        //sender.notify("went " + direction)
-        sender.notify(world.getRoomById(sender.room).getDescription())
-        world.getNearbyPlayers(sender)
+        var message = world.getRoomById(sender.room).getDescription()
+        
+        // notify & note other players
+        var otherPlayersInRoom = world.getPlayersInRoom(sender.room).filter((player) => { return player.name != sender.name })
+        if (otherPlayersInRoom.length > 0) { // if there are other players in the room
+            message = message + "\n" + "players already here:"
+            otherPlayersInRoom.forEach((player) => {
+                message = message + " " + player.name
+                player.notify(sender.name + " has entered")
+            })
+        }
+        
+        // update sender
+        sender.notify(message)
+        
+        // update other room's players that the sender has left
+        var playersInOtherRoom = world.getPlayersInRoom(previousRoom)
+        playersInOtherRoom.forEach((player) => {
+            player.notify(sender.name + " has departed to the " + direction)
+        })
     } else {
         sender.notify("cannot go " + direction)
     }
@@ -534,6 +557,16 @@ function attack(sender, enemyName, item) {
         enemy.notify("You were injured by " + sender.name + "!")
     } else {
         sender.notify("Attack unsuccessful.")
+    }
+}
+
+function speak(sender, quote, scope, target) {
+    if (scope == "local") {
+        if (!target) {
+            var targets = world.getPlayersInRoom(sender.room).filter((player) => { return player.name != sender.name })
+            sender.notify("you said: " + quote)
+            targets.forEach((target) => { target.notify(sender.name + " says: " + quote) })
+        }
     }
 }
 
