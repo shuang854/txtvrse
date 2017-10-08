@@ -172,7 +172,7 @@ class World {
     getPlayerNames() {
         return this.players.map((player) => { return player.name })
     }
-    
+
     getPlayersInRoom(roomId) {
         return this.players.filter((player) => { return player.room == roomId })
     }
@@ -221,73 +221,44 @@ defaultDictionary = {
     "determiners": [],
     "adjectives": [],
     "nouns": ["north", "east", "south", "west"],
-    "prepositions": ["with"],
+    "prepositions": ["with", "to"],
     "verbs": ["go", "move", "walk", "e", "n", "s", "w", "take", "pick up", "drop", "leave", "stab", "look", "description", "say"]
 }
 
 
 function lexer(text, dictionary) {
     var tokens = []
-    
+
     var text = text.trim()
     var match = false
     for (var i = text.length; i >= 0; i--) {
         var substr = text.substring(0, i)
-        
+
         if (dictionary.determiners.indexOf(substr) >= 0) { // if string is a determiner
-            tokens.push({ "part": "D", "string": substr }); match = true
+            tokens.push({ "part": "D", "string": substr });
+            match = true
         } else if (dictionary.adjectives.indexOf(substr) >= 0) { // if string is an adjective
-            tokens.push({ "part": "A", "string": substr }); match = true
+            tokens.push({ "part": "A", "string": substr });
+            match = true
         } else if (dictionary.nouns.indexOf(substr) >= 0 || substr.match(/^\".*\"$/)) { // if string is a noun
-            tokens.push({ "part": "N", "string": substr }); match = true
+            tokens.push({ "part": "N", "string": substr });
+            match = true
         } else if (dictionary.prepositions.indexOf(substr) >= 0) { // if string is a preposition
-            tokens.push({ "part": "P", "string": substr }); match = true
+            tokens.push({ "part": "P", "string": substr });
+            match = true
         } else if (dictionary.verbs.indexOf(substr) >= 0) { // if string is a verb
-            tokens.push({ "part": "V", "string": substr }); match = true
+            tokens.push({ "part": "V", "string": substr });
+            match = true
         }
-        
+
         if (match) {
             text = text.substring(i, text.length).trim()
-            i = text.length+1
+            i = text.length + 1
             match = false
         }
     }
-    
-    return tokens
-    
-    
-    
-    // FIXME: invert search direction to search full string to empty string, not empty string to full string
 
-    // var tokens = []
-    // 
-    // var substr = ""
-    // for (var i = 0; i < text.length; i++) {
-    //     substr = substr + text[i]
-    // 
-    //     if (substr.match(/^\s+$/)) { // if substring consists of only whitespace characters (a.k.a. is between a word)
-    //         substr = "" // ignore it
-    //     }
-    // 
-    //     if (dictionary.determiners.indexOf(substr) >= 0) { // if string is a determiner
-    //         tokens.push({ "part": "D", "string": substr })
-    //         substr = ""
-    //     } else if (dictionary.adjectives.indexOf(substr) >= 0) { // if string is an adjective
-    //         tokens.push({ "part": "A", "string": substr })
-    //         substr = ""
-    //     } else if (dictionary.nouns.indexOf(substr) >= 0 || substr.match(/^\".*\"$/)) { // if string is a noun
-    //         tokens.push({ "part": "N", "string": substr })
-    //         substr = ""
-    //     } else if (dictionary.prepositions.indexOf(substr) >= 0) { // if string is a preposition
-    //         tokens.push({ "part": "P", "string": substr })
-    //         substr = ""
-    //     } else if (dictionary.verbs.indexOf(substr) >= 0) { // if string is a verb
-    //         tokens.push({ "part": "V", "string": substr })
-    //         substr = ""
-    //     }
-    // }
-    // 
-    // return tokens
+    return tokens
 }
 
 function parser(tokens) {
@@ -485,8 +456,13 @@ function invoke(command, sender, world) {
                 break
             case "say":
                 if (command.NP && command.NP.N.string.match(/^\".*\"$/)) { // if said something in quotations
-                    speak(sender, command.NP.N.string, "local", null)
-                } 
+                    var target = null
+                    if (command.NP.PP && command.NP.PP.P.string == "to" && command.NP.PP.NP) { // then the sender is saying it to a target
+                        target = command.NP.PP.NP.N.string
+                    }
+                    
+                    speak(sender, command.NP.N.string, "local", target)
+                }
                 break
             default:
                 sender.notify("that command has not been programmed yet")
@@ -498,12 +474,12 @@ function invoke(command, sender, world) {
 
 function move(sender, direction) {
     var previousRoom = sender.room
-    
+
     var success = sender.move(direction)
 
     if (success) {
         var message = world.getRoomById(sender.room).getDescription()
-        
+
         // notify & note other players
         var otherPlayersInRoom = world.getPlayersInRoom(sender.room).filter((player) => { return player.name != sender.name })
         if (otherPlayersInRoom.length > 0) { // if there are other players in the room
@@ -513,10 +489,10 @@ function move(sender, direction) {
                 player.notify(sender.name + " has entered")
             })
         }
-        
+
         // update sender
         sender.notify(message)
-        
+
         // update other room's players that the sender has left
         var playersInOtherRoom = world.getPlayersInRoom(previousRoom)
         playersInOtherRoom.forEach((player) => {
@@ -562,12 +538,18 @@ function attack(sender, enemyName, item) {
 
 function speak(sender, quote, scope, target) {
     if (scope == "local") {
-        if (!target) {
-            var targets = world.getPlayersInRoom(sender.room).filter((player) => { return player.name != sender.name })
+        if (!target) { // not to anyone in particular
             sender.notify("you said: " + quote)
-            targets.forEach((target) => { target.notify(sender.name + " says: " + quote) })
+            var listeners = world.getPlayersInRoom(sender.room).filter((player) => { return player.name != sender.name })
+            listeners.forEach((listener) => { listener.notify(sender.name + " says " + quote) })
+        } else { // to a specific person
+            sender.notify("you said: " + quote + " to " + target)
+            var otherListeners = world.getPlayersInRoom(sender.room).filter((player) => { return player.name != sender.name && player.name != target })
+            otherListeners.forEach((listener) => { listener.notify(sender.name + " says " + quote + " to " + target) })
+            world.getPlayerByName(target).notify(sender.name + " said " + quote + " to you")
         }
     }
+    // TODO: add yelling & whispering
 }
 
 ////////////////////////////////////////////////////////////////////////////////
