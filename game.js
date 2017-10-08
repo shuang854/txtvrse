@@ -42,7 +42,7 @@ class Room {
         var itemList = "Items in area: "
         if (this.items.length > 0) {
             this.items.map((item) => { itemList = itemList + item.name + ", " })
-            itemList = itemList.substr(0, itemList.length-2)
+            itemList = itemList.substr(0, itemList.length - 2)
         } else {
             itemList = itemList + "none"
         }
@@ -183,18 +183,18 @@ function loadWorld(json) {
     var itemNames = new Set() // set for uniqueness
     var itemIdCounter = 0
     var roomIdCounter = 0
-    
+
     world = new World(json.name, json.startingRooms, json.rooms.map((room) => {
         roomIdCounter++
-        return new Room(roomIdCounter-1, room.name, room.description, room.doors.map((door) => {
+        return new Room(roomIdCounter - 1, room.name, room.description, room.doors.map((door) => {
             return new Door(door.direction, door.room)
         }), room.items.map((item) => {
             itemNames.add(item.name)
             itemIdCounter++
-            return new Item(itemIdCounter-1, item.name)
+            return new Item(itemIdCounter - 1, item.name)
         }))
     }), json.players, defaultDictionary)
-    
+
     world.dictionary.nouns = world.dictionary.nouns.concat(Array.from(itemNames))
     return world
 }
@@ -209,7 +209,7 @@ defaultDictionary = {
     "adjectives": [],
     "nouns": ["north", "east", "south", "west"],
     "prepositions": ["with"],
-    "verbs": ["go", "move", "walk", "take", "pick up", "drop", "leave"]
+    "verbs": ["go", "move", "walk", "take", "pick up", "drop", "leave", "look"]
 }
 
 
@@ -280,7 +280,9 @@ function parser(tokens) {
     //console.log("----------------")
 
     //console.log("L: ", combinedList.length)
-    if (lastValidPhrase != null && combinedList.length >= 3 && lastValidPhrase.part == "VP") {
+    if (combinedList.length == 2 && combinedList[0] == undefined && combinedList[1].part == "V") { // single verb
+        return { "part": "VP", "V": combinedList[1], "NP": null, "PP": null }
+    } else if (lastValidPhrase != null && combinedList.length >= 3 && lastValidPhrase.part == "VP") {
         return lastValidPhrase
     } else {
         return null // error
@@ -414,6 +416,10 @@ function invoke(command, sender, world) {
                 if (command.NP) {
                     drop(sender, command.NP.N.string)
                 }
+                break
+            case "look":
+                sender.notify(world.getRoomById(sender.room).getDescription())
+                break
             default:
                 sender.notify("that command has not been programmed yet")
         }
@@ -424,7 +430,7 @@ function invoke(command, sender, world) {
 
 function move(sender, direction) {
     var success = sender.move(direction)
-    
+
     if (success) {
         //sender.notify("went " + direction)
         sender.notify(world.getRoomById(sender.room).getDescription())
@@ -462,14 +468,14 @@ function perform(text, socketId, world) {
     // Parse phrase
     var dict = world.dictionary
     dict.nouns = dict.nouns.concat(world.getPlayerNames()) // add in current player names to dictionary
-    
+
     var tokens = lexer(text, dict)
     var command = parser(tokens)
-    
+
     if (!command) { // if the command could not be parsed
         sender.notify("command could not be parsed")
     }
-    
+
     // run command
     invoke(command, sender, world)
 }
