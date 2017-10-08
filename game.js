@@ -137,6 +137,15 @@ class Player {
 
         return itemsToDrop.length > 0
     }
+
+    attack(enemy, itemName) {
+        var playerInRoom = world.players.filter((p) => { return p.name == enemy.name })
+        var weapon = this.inventory.filter((i) => { return i.name == itemName })
+        if (weapon.length == 1 && playerInRoom.length == 1) {
+            return true
+        } else
+            return false
+    }
 }
 
 class World {
@@ -162,6 +171,12 @@ class World {
 
     getPlayerNames() {
         return this.players.map((player) => { return player.name })
+    }
+
+    getNearbyPlayers(sender) {
+        var nearbyPlayers = this.players.filter((player) => { return player.room == sender.room && player.name != sender.name })
+        nearbyPlayers.map((player) => sender.notify("Player " + player.name + " is in the area!"))
+        nearbyPlayers.map((player) => player.notify("Player " + sender.name + " is in the area!"))
     }
 
     getPlayerByName(name) {
@@ -209,7 +224,7 @@ defaultDictionary = {
     "adjectives": [],
     "nouns": ["north", "east", "south", "west"],
     "prepositions": ["with"],
-    "verbs": ["go", "move", "walk", "take", "pick up", "drop", "leave"]
+    "verbs": ["go", "move", "walk", "take", "pick up", "drop", "leave", "stab"]
 }
 
 
@@ -369,7 +384,7 @@ function parsePrepositionalPhrase(tokens) {
     var phrase = null
 
     // P
-    // P PP
+    // P NP
 
     switch (tokens.length) {
         case 1:
@@ -408,12 +423,20 @@ function invoke(command, sender, world) {
                 if (command.NP) {
                     take(sender, command.NP.N.string)
                 }
+                //TODO: differentiate between items and players
                 break
             case "drop":
             case "leave":
                 if (command.NP) {
                     drop(sender, command.NP.N.string)
                 }
+            case "stab":
+                if (command.NP && command.NP.PP && command.NP.PP.NP) {
+                    attack(sender, command.NP.N.string, command.NP.PP.NP.N.string)
+                }
+                //TODO: fix blank response when input is wrong
+                //TODO: infinite loop somewhere when typing "stabb player" instead of "stab"?
+                break
             default:
                 sender.notify("that command has not been programmed yet")
         }
@@ -428,6 +451,7 @@ function move(sender, direction) {
     if (success) {
         //sender.notify("went " + direction)
         sender.notify(world.getRoomById(sender.room).getDescription())
+        world.getNearbyPlayers(sender)
     } else {
         sender.notify("cannot go " + direction)
     }
@@ -450,6 +474,19 @@ function drop(sender, item) {
         sender.notify("dropped " + item)
     } else {
         sender.notify("you have no such items to drop")
+    }
+}
+
+function attack(sender, enemyName, item) {
+    var enemy = world.getPlayerByName(enemyName);
+
+    var success = sender.attack(enemy, item)
+
+    if (success) {
+        sender.notify("You stabbed " + enemyName + " with " + item + "!")
+        enemy.notify("You were injured by " + sender.name + "!")
+    } else {
+        sender.notify("Attack unsuccessful.")
     }
 }
 

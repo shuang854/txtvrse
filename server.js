@@ -32,6 +32,7 @@ io.on("connection", (socket) => {
 
     socket.on("disconnect", (socket) => {
         console.log("a user disconnected: ", socket.id)
+        //TODO: fix undefined socket id
     })
 
     socket.on("register", (data) => {
