@@ -224,42 +224,72 @@ defaultDictionary = {
     "adjectives": [],
     "nouns": ["north", "east", "south", "west"],
     "prepositions": ["with"],
-    "verbs": ["go", "move", "walk", "take", "pick up", "drop", "leave", "stab", "look"]
+    "verbs": ["go", "move", "walk", "e", "n", "s", "w", "take", "pick up", "drop", "leave", "stab", "look"]
 }
 
 
 function lexer(text, dictionary) {
-    // FIXME: invert search direction to search full string to empty string, not empty string to full string
-
     var tokens = []
-
-    var substr = ""
-    for (var i = 0; i < text.length; i++) {
-        substr = substr + text[i]
-
-        if (substr.match(/^\s+$/)) { // if substring consists of only whitespace characters (a.k.a. is between a word)
-            substr = "" // ignore it
-        }
-
+    
+    var text = text.trim()
+    var match = false
+    for (var i = text.length; i >= 0; i--) {
+        var substr = text.substring(0, i)
+        
         if (dictionary.determiners.indexOf(substr) >= 0) { // if string is a determiner
-            tokens.push({ "part": "D", "string": substr })
-            substr = ""
+            tokens.push({ "part": "D", "string": substr }); match = true
         } else if (dictionary.adjectives.indexOf(substr) >= 0) { // if string is an adjective
-            tokens.push({ "part": "A", "string": substr })
-            substr = ""
+            tokens.push({ "part": "A", "string": substr }); match = true
         } else if (dictionary.nouns.indexOf(substr) >= 0 || substr.match(/^\".*\"$/)) { // if string is a noun
-            tokens.push({ "part": "N", "string": substr })
-            substr = ""
+            tokens.push({ "part": "N", "string": substr }); match = true
         } else if (dictionary.prepositions.indexOf(substr) >= 0) { // if string is a preposition
-            tokens.push({ "part": "P", "string": substr })
-            substr = ""
+            tokens.push({ "part": "P", "string": substr }); match = true
         } else if (dictionary.verbs.indexOf(substr) >= 0) { // if string is a verb
-            tokens.push({ "part": "V", "string": substr })
-            substr = ""
+            tokens.push({ "part": "V", "string": substr }); match = true
+        }
+        
+        if (match) {
+            text = text.substring(i, text.length).trim()
+            i = text.length+1
+            match = false
         }
     }
-
+    
     return tokens
+    
+    
+    
+    // FIXME: invert search direction to search full string to empty string, not empty string to full string
+
+    // var tokens = []
+    // 
+    // var substr = ""
+    // for (var i = 0; i < text.length; i++) {
+    //     substr = substr + text[i]
+    // 
+    //     if (substr.match(/^\s+$/)) { // if substring consists of only whitespace characters (a.k.a. is between a word)
+    //         substr = "" // ignore it
+    //     }
+    // 
+    //     if (dictionary.determiners.indexOf(substr) >= 0) { // if string is a determiner
+    //         tokens.push({ "part": "D", "string": substr })
+    //         substr = ""
+    //     } else if (dictionary.adjectives.indexOf(substr) >= 0) { // if string is an adjective
+    //         tokens.push({ "part": "A", "string": substr })
+    //         substr = ""
+    //     } else if (dictionary.nouns.indexOf(substr) >= 0 || substr.match(/^\".*\"$/)) { // if string is a noun
+    //         tokens.push({ "part": "N", "string": substr })
+    //         substr = ""
+    //     } else if (dictionary.prepositions.indexOf(substr) >= 0) { // if string is a preposition
+    //         tokens.push({ "part": "P", "string": substr })
+    //         substr = ""
+    //     } else if (dictionary.verbs.indexOf(substr) >= 0) { // if string is a verb
+    //         tokens.push({ "part": "V", "string": substr })
+    //         substr = ""
+    //     }
+    // }
+    // 
+    // return tokens
 }
 
 function parser(tokens) {
@@ -419,6 +449,18 @@ function invoke(command, sender, world) {
                 if (command.NP) {
                     move(sender, command.NP.N.string)
                 }
+                break
+            case "e":
+                move(sender, "east")
+                break
+            case "n":
+                move(sender, "north")
+                break
+            case "s":
+                move(sender, "south")
+                break
+            case "w":
+                move(sender, "west")
                 break
             case "take":
             case "pick up":
