@@ -221,40 +221,29 @@ defaultDictionary = {
     "determiners": [],
     "adjectives": [],
     "nouns": ["north", "east", "south", "west"],
-    "prepositions": ["with", "to"],
-    "verbs": ["go", "move", "walk", "e", "n", "s", "w", "take", "pick up", "drop", "leave", "stab", "look", "description", "say"]
+    "prepositions": ["with", "to", "up"],
+    "verbs": ["go", "move", "walk", "e", "n", "s", "w", "take", "pick", "drop", "leave", "stab", "look", "description", "say"]
 }
 
 
 function lexer(text, dictionary) {
     var tokens = []
 
-    var text = text.trim()
+    var text = text.split(" ")
     var match = false
-    for (var i = text.length; i >= 0; i--) {
-        var substr = text.substring(0, i)
+    for (var i = 0; i < text.length; i++) {
+        var substr = text[i]
 
         if (dictionary.determiners.indexOf(substr) >= 0) { // if string is a determiner
             tokens.push({ "part": "D", "string": substr });
-            match = true
         } else if (dictionary.adjectives.indexOf(substr) >= 0) { // if string is an adjective
             tokens.push({ "part": "A", "string": substr });
-            match = true
-        } else if (dictionary.nouns.indexOf(substr) >= 0 || substr.match(/^\".*\"$/)) { // if string is a noun
+        } else if (dictionary.nouns.indexOf(substr) >= 0) { // if string is a noun
             tokens.push({ "part": "N", "string": substr });
-            match = true
         } else if (dictionary.prepositions.indexOf(substr) >= 0) { // if string is a preposition
             tokens.push({ "part": "P", "string": substr });
-            match = true
         } else if (dictionary.verbs.indexOf(substr) >= 0) { // if string is a verb
             tokens.push({ "part": "V", "string": substr });
-            match = true
-        }
-
-        if (match) {
-            text = text.substring(i, text.length).trim()
-            i = text.length + 1
-            match = false
         }
     }
 
@@ -268,6 +257,7 @@ function parser(tokens) {
     var combinedList = [tokens[tokens.length - 1]]
     //console.log("combinedList: ", combinedList)
     var i = tokens.length - 1
+    var counter = 0
     while (combinedList[0]) {
         //console.log("----------------")
         var VPattempt = parseVerbPhrase(combinedList)
@@ -275,6 +265,10 @@ function parser(tokens) {
         var PPattempt = parsePrepositionalPhrase(combinedList)
         var phraseAttempt = VPattempt || NPattempt || PPattempt
         //console.log("phraseAttempt: ", phraseAttempt)
+
+        counter++
+        if (counter > 100) // break out of infinite loop
+            return null
 
         if (phraseAttempt != null) { // tokens in combinedList are a valid phrase
             //console.log("---- Valid Phrase ----")
@@ -432,9 +426,13 @@ function invoke(command, sender, world) {
                 move(sender, "west")
                 break
             case "take":
-            case "pick up":
                 if (command.NP) {
                     take(sender, command.NP.N.string)
+                }
+                break
+            case "pick":
+                if (command.PP && command.PP.P && command.PP.P.string == "up") {
+                    take(sender, command.PP.NP.N.string)
                 }
                 //TODO: differentiate between items and players
                 break
@@ -447,8 +445,6 @@ function invoke(command, sender, world) {
                 if (command.NP && command.NP.PP && command.NP.PP.NP) {
                     attack(sender, command.NP.N.string, command.NP.PP.NP.N.string)
                 }
-                //TODO: fix blank response when input is wrong
-                //TODO: infinite loop somewhere when typing "stabb player" instead of "stab"?
                 break
             case "look":
             case "description":
@@ -467,6 +463,7 @@ function invoke(command, sender, world) {
             default:
                 sender.notify("that command has not been programmed yet")
         }
+        //TODO: fix blank response
     }
 }
 
@@ -483,7 +480,7 @@ function move(sender, direction) {
         // notify & note other players
         var otherPlayersInRoom = world.getPlayersInRoom(sender.room).filter((player) => { return player.name != sender.name })
         if (otherPlayersInRoom.length > 0) { // if there are other players in the room
-            message = message + "\n" + "players already here:"
+            message = message + ", players already here:"
             otherPlayersInRoom.forEach((player) => {
                 message = message + " " + player.name
                 player.notify(sender.name + " has entered")
@@ -509,7 +506,7 @@ function take(sender, item) {
     if (success) {
         sender.notify("took " + item)
     } else {
-        sender.notify(item + " not in room")
+        sender.notify(item + " not in area")
     }
 }
 
