@@ -180,10 +180,10 @@ class World {
         newPlayer.notify(this.getRoomById(newPlayer.room).getDescription())
     }
 
-    removePlayer(name) {
-        var player = this.getPlayerByName(name)
+    removePlayer(socketId) {
+        var player = this.getPlayerBySocketId(socketId)
         player.drop("inventory")
-        this.players = this.players.filter((p) => { return p.name != name })
+        this.players = this.players.filter((p) => { return p.name != player.name })
     }
 
     getPlayerNames() {
