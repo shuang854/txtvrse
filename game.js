@@ -166,12 +166,13 @@ class Player {
 }
 
 class World {
-    constructor(name, startingRooms, rooms, players, dictionary) {
+    constructor(name, startingRooms, rooms, players, dictionary, items) {
         this.name = name
         this.startingRooms = startingRooms
         this.rooms = rooms
         this.players = []
         this.dictionary = dictionary
+        this.items = items
     }
 
     addPlayer(name, socket) {
@@ -206,6 +207,10 @@ class World {
     getRoomById(id) {
         return this.rooms.filter((room) => { return room.id == id })[0]
     }
+
+    getItemNames() {
+        return this.items.map((item) => { return item.name })
+    }
 }
 
 // WORLD GENERATION
@@ -214,6 +219,7 @@ function loadWorld(json) {
     var itemNames = new Set() // set for uniqueness
     var itemIdCounter = 0
     var roomIdCounter = 0
+    var itemList = []
 
     world = new World(json.name, json.startingRooms, json.rooms.map((room) => {
         roomIdCounter++
@@ -222,9 +228,11 @@ function loadWorld(json) {
         }), room.items.map((item) => {
             itemNames.add(item.name)
             itemIdCounter++
-            return new Item(itemIdCounter - 1, item.name)
+            var newItem = new Item(itemIdCounter - 1, item.name)
+            itemList.push(newItem)
+            return newItem
         }))
-    }), json.players, defaultDictionary)
+    }), json.players, defaultDictionary, itemList)
 
     world.dictionary.nouns = world.dictionary.nouns.concat(Array.from(itemNames))
     return world
@@ -449,7 +457,7 @@ function invoke(command, sender, world) {
                 }
                 break
             case "pick":
-                if (command.PP && command.PP.P && command.PP.P.string == "up") {
+                if (command.PP && command.PP.P && command.PP.P.string == "up" && command.PP.NP) {
                     take(sender, command.PP.NP.N.string)
                 }
                 //TODO: differentiate between items and players
@@ -459,6 +467,7 @@ function invoke(command, sender, world) {
                 if (command.NP) {
                     drop(sender, command.NP.N.string)
                 }
+                break
             case "stab":
                 console.log(command)
                 if (command.NP && command.NP.PP && command.NP.PP.NP) {
@@ -506,7 +515,7 @@ function move(sender, direction) {
             message = message + ", Players in area:"
             otherPlayersInRoom.forEach((player) => {
                 message = message + " " + player.name
-                player.notify(sender.name + " has entered the area")
+                player.notify(sender.name + " has entered the area.")
             })
         }
 
@@ -516,20 +525,25 @@ function move(sender, direction) {
         // update other room's players that the sender has left
         var playersInOtherRoom = world.getPlayersInRoom(previousRoom)
         playersInOtherRoom.forEach((player) => {
-            player.notify(sender.name + " has departed to the " + direction)
+            player.notify(sender.name + " has departed to the " + direction + ".")
         })
     } else {
-        sender.notify("cannot go " + direction)
+        sender.notify("Cannot go " + direction + ".")
     }
 }
 
 function take(sender, item) {
-    var success = sender.take(item)
+    var checkItem = world.getItemNames().filter((i) => { return i == item })
+    if (checkItem.length > 0) {
+        var success = sender.take(item)
 
-    if (success) {
-        sender.notify("took " + item)
+        if (success) {
+            sender.notify("Took " + item + ".")
+        } else {
+            sender.notify(item + " not in area.")
+        }
     } else {
-        sender.notify(item + " not in area")
+        sender.notify("You can only take items.")
     }
 }
 
@@ -537,9 +551,9 @@ function drop(sender, item) {
     var success = sender.drop(item)
 
     if (success) {
-        sender.notify("dropped " + item)
+        sender.notify("Dropped " + item + ".")
     } else {
-        sender.notify("you have no such items to drop")
+        sender.notify("You have no such item to drop.")
     }
 }
 
