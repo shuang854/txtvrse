@@ -183,9 +183,10 @@ class World {
 
     removePlayer(socketId) {
         var player = this.getPlayerBySocketId(socketId)
-        if (player)
+        if (player) {
             player.drop("inventory")
-        this.players = this.players.filter((p) => { return p.name != player.name })
+            this.players = this.players.filter((p) => { return p.name != player.name })
+        }
     }
 
     getPlayerNames() {
