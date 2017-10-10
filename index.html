@@ -11,8 +11,9 @@
 
 <body>
     <div id="intro">
-        <strong>Txtvrse</strong>
-        <br> Username:
+        <p id="title">Txtvrse</p> 
+        <p id="u">Username:</p>
+        <p id="error"><br></p>
         <form id="user" action="">
             <input id="username" autocomplete="off" /><button id="sub">Submit</button>
         </form>
@@ -33,7 +34,18 @@
     $("#game").hide()
     
     $("#user").submit(() => {
-        socket.emit("register", { "name": $("#username").val() })
+        var nameInput = $("#username").val()
+
+        if (nameInput == "") {
+            $("#error").text("Input a valid username.")
+            return false
+        } else if (nameInput.length > 10) {
+            $("#error").text("Max 10 characters.")
+            $("#username").val("")
+            return false
+        }
+
+        socket.emit("register", { "name": nameInput })
         $("#game").show()
         $("#intro").hide()
         return false // don't refresh page
