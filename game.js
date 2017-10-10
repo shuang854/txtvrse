@@ -437,6 +437,8 @@ function invoke(command, sender, world) {
             case "walk":
                 if (command.NP) {
                     move(sender, command.NP.N.string)
+                } else {
+                    sender.notify("Where are you going?")
                 }
                 break
             case "e":
@@ -454,11 +456,15 @@ function invoke(command, sender, world) {
             case "take":
                 if (command.NP) {
                     take(sender, command.NP.N.string)
+                } else {
+                    sender.notify("What are you taking?")
                 }
                 break
             case "pick":
                 if (command.PP && command.PP.P && command.PP.P.string == "up" && command.PP.NP) {
                     take(sender, command.PP.NP.N.string)
+                } else {
+                    sender.notify("What are you taking?")
                 }
                 //TODO: differentiate between items and players
                 break
@@ -466,17 +472,22 @@ function invoke(command, sender, world) {
             case "leave":
                 if (command.NP) {
                     drop(sender, command.NP.N.string)
+                } else {
+                    sender.notify("What are you dropping?")
                 }
                 break
             case "stab":
-                console.log(command)
                 if (command.NP && command.NP.PP && command.NP.PP.NP) {
-                    attack(sender, command.NP.N.string, command.NP.PP.NP.N.string)
+                    var checkName = world.getPlayerNames().filter((name) => { return name == command.NP.N.string })
+                    if (checkName.length > 0)
+                        attack(sender, command.NP.N.string, command.NP.PP.NP.N.string)
+                    else
+                        sender.notify("Cannot attack " + command.NP.N.string + ".")
                 } else if (!command.NP) {
-                    sender.notify("Who are you attacking?")
+                    sender.notify("What are you attacking?")
                 } else if (!command.PP) {
                     sender.notify("With what?")
-                }
+                } 
                 break
             case "look":
             case "description":
