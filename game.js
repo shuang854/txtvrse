@@ -2,7 +2,7 @@
 // - proper login screen
 // - accounts for players
 // - decide on theme of game
-// - implement AI   
+// - implement AI
 
 ////////////////////////////////////////////////////////////////////////////////
 // IMPORTS & EXPORTS
@@ -130,10 +130,13 @@ class Player {
 
     drop(itemName) {
         var itemsToDrop = []
+        var isDropped = true
         if (itemName == "inventory") {
             itemsToDrop = this.inventory
         } else {
             itemsToDrop = this.inventory.filter((i) => { return i.name == itemName })
+            if (itemsToDrop.length < 1)
+                isDropped = false
         }
 
         itemsToDrop.forEach((i) => {
@@ -141,16 +144,24 @@ class Player {
             world.getRoomById(this.room).addItem(i)
         })
 
-        return itemsToDrop.length > 0
+        return isDropped
     }
 
     attack(enemy, itemName) {
-        var playerInRoom = world.players.filter((p) => { return p.name == enemy.name })
+        var playerInRoom = world.players.filter((p) => { return p.name == enemy.name && p.room == this.room })
         var weapon = this.inventory.filter((i) => { return i.name == itemName })
         if (weapon.length == 1 && playerInRoom.length == 1) {
+            playerInRoom[0].damage(1)
             return true
         } else
             return false
+    }
+
+    die() {
+        this.drop("inventory")
+        this.room = world.startingRooms[Math.floor(Math.random() * world.startingRooms.length)]
+        this.health = 3
+        return true
     }
 }
 
@@ -164,7 +175,7 @@ class World {
     }
 
     addPlayer(name, socket) {
-        var newPlayer = new Player(name, socket, this.startingRooms[Math.floor(Math.random() * this.startingRooms.length)], [], 100)
+        var newPlayer = new Player(name, socket, this.startingRooms[Math.floor(Math.random() * this.startingRooms.length)], [], 3)
         this.players.push(newPlayer)
         newPlayer.notify(this.getRoomById(newPlayer.room).getDescription())
     }
@@ -448,8 +459,13 @@ function invoke(command, sender, world) {
                     drop(sender, command.NP.N.string)
                 }
             case "stab":
+                console.log(command)
                 if (command.NP && command.NP.PP && command.NP.PP.NP) {
                     attack(sender, command.NP.N.string, command.NP.PP.NP.N.string)
+                } else if (!command.NP) {
+                    sender.notify("Who are you attacking?")
+                } else if (!command.PP) {
+                    sender.notify("With what?")
                 }
                 break
             case "look":
@@ -486,10 +502,10 @@ function move(sender, direction) {
         // notify & note other players
         var otherPlayersInRoom = world.getPlayersInRoom(sender.room).filter((player) => { return player.name != sender.name })
         if (otherPlayersInRoom.length > 0) { // if there are other players in the room
-            message = message + ", players already here:"
+            message = message + ", Players in area:"
             otherPlayersInRoom.forEach((player) => {
                 message = message + " " + player.name
-                player.notify(sender.name + " has entered")
+                player.notify(sender.name + " has entered the area")
             })
         }
 
@@ -527,13 +543,18 @@ function drop(sender, item) {
 }
 
 function attack(sender, enemyName, item) {
-    var enemy = world.getPlayerByName(enemyName);
+    var enemy = world.getPlayerByName(enemyName)
 
     var success = sender.attack(enemy, item)
 
     if (success) {
         sender.notify("You stabbed " + enemyName + " with " + item + "!")
         enemy.notify("You were injured by " + sender.name + "!")
+        if (enemy.health <= 0) {
+            die(enemy)
+            enemy.notify("You are dead!")
+            sender.notify("You killed " + enemy.name + "!")
+        }
     } else {
         sender.notify("Attack unsuccessful.")
     }
@@ -553,6 +574,10 @@ function speak(sender, quote, scope, target) {
         }
     }
     // TODO: add yelling & whispering
+}
+
+function die(sender) {
+    var success = sender.die()
 }
 
 ////////////////////////////////////////////////////////////////////////////////
