@@ -207,7 +207,7 @@ function loadWorld(json) {
             return new Item(itemIdCounter - 1, item.name)
         }))
     }), json.players, defaultDictionary)
-
+    
     world.dictionary.nouns = world.dictionary.nouns.concat(Array.from(itemNames))
     return world
 }
@@ -262,38 +262,27 @@ function lexer(text, dictionary) {
 }
 
 function parser(tokens) {
-    //console.log("tokens: ", tokens)
 
     var lastValidPhrase = null
     var combinedList = [tokens[tokens.length - 1]]
-    //console.log("combinedList: ", combinedList)
     var i = tokens.length - 1
     while (combinedList[0]) {
-        //console.log("----------------")
         var VPattempt = parseVerbPhrase(combinedList)
         var NPattempt = parseNounPhrase(combinedList)
         var PPattempt = parsePrepositionalPhrase(combinedList)
         var phraseAttempt = VPattempt || NPattempt || PPattempt
-        //console.log("phraseAttempt: ", phraseAttempt)
 
         if (phraseAttempt != null) { // tokens in combinedList are a valid phrase
-            //console.log("---- Valid Phrase ----")
             lastValidPhrase = phraseAttempt // save that phrase as the current best
             combinedList.unshift(tokens[i - 1]) // add the word before to the beginning of the combinedList
             i-- // update index
         } else if (phraseAttempt == null && lastValidPhrase != null) { // tokens in combinedList are not a valid phrase
-            //console.log("---- Invalid Phrase ----")
             combinedList = [combinedList[0], lastValidPhrase] // apply previous valid phrase transformation
         } else { // current phrase is invalid and there is no previously found valid phrase
-            //console.log("---- Malformed Phrase ----")
             return null // it's an invalid phrase as a whole
         }
-
-        //console.log("combinedList: ", combinedList)
     }
-    //console.log("----------------")
 
-    //console.log("L: ", combinedList.length)
     if (combinedList.length == 2 && combinedList[0] == undefined && combinedList[1].part == "V") { // single verb
         return { "part": "VP", "V": combinedList[1], "NP": null, "PP": null }
     } else if (lastValidPhrase != null && combinedList.length >= 3 && lastValidPhrase.part == "VP") {
@@ -460,7 +449,7 @@ function invoke(command, sender, world) {
                     if (command.NP.PP && command.NP.PP.P.string == "to" && command.NP.PP.NP) { // then the sender is saying it to a target
                         target = command.NP.PP.NP.N.string
                     }
-                    
+
                     speak(sender, command.NP.N.string, "local", target)
                 }
                 break
