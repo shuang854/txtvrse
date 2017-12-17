@@ -30,9 +30,9 @@ var world = game.loadWorld(testworld)
 io.on("connection", (socket) => {
     console.log("a user connected: ", socket.id)
 
-    socket.on("disconnect", (socket) => {
+    socket.on("disconnect", () => {
         console.log("a user disconnected: ", socket.id)
-        //TODO: fix undefined socket id
+        world.removePlayer(socket.id)
     })
 
     socket.on("register", (data) => {

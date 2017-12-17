@@ -1,17 +1,30 @@
 * {
     margin: 0;
-    padding: 0;
+    padding: 1px;
     box-sizing: border-box;
+    font-family: 'Times New Roman', Times, serif;
+    font-size: 20px;
 }
 
 body {
-    font-size: 16px;
-    font-family: 'Times New Roman', Times, serif;
     background: #eee;
+}
+
+#title {
+    font-size: 24px;
+    font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-weight: bold;
+    padding-left: 4px;
+}
+
+#u {
+    font-size: 22px;
+    padding-left: 4px;
 }
 
 #prompt {
     background: #eee;
+    font-size: 16px;
     position: fixed;
     left: 12.5%;
     bottom: 12.5%;
@@ -20,7 +33,6 @@ body {
 
 #m {
     font-size: 16px;
-    font-family: 'Times New Roman', Times, serif;
     border: 1px solid black;
     padding: 10px;
     width: calc(100% - 105px);
@@ -31,7 +43,6 @@ body {
     width: 100px;
     background: #eee;
     font-size: 16px;
-    font-family: 'Times New Roman', Times, serif;
     border: 1px solid black;
     padding: 10px;
 }
@@ -52,6 +63,7 @@ body {
 
 #messages li {
     padding: 5px 5px;
+    font-size: 16px;
     border-bottom-style: solid;
     border-width: 1px;
 }
@@ -60,14 +72,7 @@ body {
     background: white;
 }
 
-#message {
-    font-size: 16px;
-    font-family: 'Times New Roman', Times, serif
-}
-
 #intro {
-    font-family: 'Times New Roman', Times, serif;
-    font-size: 20px;
     position: absolute;
     top: 50%;
     left: 50%;
@@ -75,10 +80,19 @@ body {
     transform: translate(-50%, -50%);
 }
 
-#sub {
-    font-family: 'Times New Roman', Times, serif;
+#username{
+    padding: 5px;
     border: 1px solid black;
-    font-size: 16px;
+}
+
+#sub {
+    border: 1px solid black;
     padding: 5px;
     margin-left: 5px;
+}
+
+#error {
+    color: red;
+    font-size: 22px;
+    padding-left: 4px;
 }

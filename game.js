@@ -1,3 +1,9 @@
+// General TODO List:
+// - proper login screen
+// - accounts for players
+// - decide on theme of game
+// - implement AI
+
 ////////////////////////////////////////////////////////////////////////////////
 // IMPORTS & EXPORTS
 ////////////////////////////////////////////////////////////////////////////////
@@ -124,10 +130,13 @@ class Player {
 
     drop(itemName) {
         var itemsToDrop = []
+        var isDropped = true
         if (itemName == "inventory") {
             itemsToDrop = this.inventory
         } else {
             itemsToDrop = this.inventory.filter((i) => { return i.name == itemName })
+            if (itemsToDrop.length < 1)
+                isDropped = false
         }
 
         itemsToDrop.forEach((i) => {
@@ -135,38 +144,49 @@ class Player {
             world.getRoomById(this.room).addItem(i)
         })
 
-        return itemsToDrop.length > 0
+        return isDropped
     }
 
     attack(enemy, itemName) {
-        var playerInRoom = world.players.filter((p) => { return p.name == enemy.name })
+        var playerInRoom = world.players.filter((p) => { return p.name == enemy.name && p.room == this.room })
         var weapon = this.inventory.filter((i) => { return i.name == itemName })
         if (weapon.length == 1 && playerInRoom.length == 1) {
+            playerInRoom[0].damage(1)
             return true
         } else
             return false
     }
+
+    die() {
+        this.drop("inventory")
+        this.room = world.startingRooms[Math.floor(Math.random() * world.startingRooms.length)]
+        this.health = 3
+        return true
+    }
 }
 
 class World {
-    constructor(name, startingRooms, rooms, players, dictionary) {
+    constructor(name, startingRooms, rooms, players, dictionary, items) {
         this.name = name
         this.startingRooms = startingRooms
         this.rooms = rooms
         this.players = []
         this.dictionary = dictionary
+        this.items = items
     }
 
     addPlayer(name, socket) {
-        var newPlayer = new Player(name, socket, this.startingRooms[Math.floor(Math.random() * this.startingRooms.length)], [], 100)
+        var newPlayer = new Player(name, socket, this.startingRooms[Math.floor(Math.random() * this.startingRooms.length)], [], 3)
         this.players.push(newPlayer)
         newPlayer.notify(this.getRoomById(newPlayer.room).getDescription())
     }
 
-    removePlayer(name) {
-        var player = this.getPlayerByName(name)
-        player.drop("inventory")
-        this.players = this.players.filter((p) => { return p.name != name })
+    removePlayer(socketId) {
+        var player = this.getPlayerBySocketId(socketId)
+        if (player) {
+            player.drop("inventory")
+            this.players = this.players.filter((p) => { return p.name != player.name })
+        }
     }
 
     getPlayerNames() {
@@ -188,6 +208,10 @@ class World {
     getRoomById(id) {
         return this.rooms.filter((room) => { return room.id == id })[0]
     }
+
+    getItemNames() {
+        return this.items.map((item) => { return item.name })
+    }
 }
 
 // WORLD GENERATION
@@ -196,6 +220,7 @@ function loadWorld(json) {
     var itemNames = new Set() // set for uniqueness
     var itemIdCounter = 0
     var roomIdCounter = 0
+    var itemList = []
 
     world = new World(json.name, json.startingRooms, json.rooms.map((room) => {
         roomIdCounter++
@@ -204,10 +229,12 @@ function loadWorld(json) {
         }), room.items.map((item) => {
             itemNames.add(item.name)
             itemIdCounter++
-            return new Item(itemIdCounter - 1, item.name)
+            var newItem = new Item(itemIdCounter - 1, item.name)
+            itemList.push(newItem)
+            return newItem
         }))
-    }), json.players, defaultDictionary)
-    
+    }), json.players, defaultDictionary, itemList)
+
     world.dictionary.nouns = world.dictionary.nouns.concat(Array.from(itemNames))
     return world
 }
@@ -221,40 +248,29 @@ defaultDictionary = {
     "determiners": [],
     "adjectives": [],
     "nouns": ["north", "east", "south", "west"],
-    "prepositions": ["with", "to"],
-    "verbs": ["go", "move", "walk", "e", "n", "s", "w", "take", "pick up", "drop", "leave", "stab", "look", "description", "say"]
+    "prepositions": ["with", "to", "up"],
+    "verbs": ["go", "move", "walk", "e", "n", "s", "w", "take", "pick", "drop", "leave", "stab", "look", "description", "say"]
 }
 
 
 function lexer(text, dictionary) {
     var tokens = []
 
-    var text = text.trim()
+    var text = text.split(" ")
     var match = false
-    for (var i = text.length; i >= 0; i--) {
-        var substr = text.substring(0, i)
+    for (var i = 0; i < text.length; i++) {
+        var substr = text[i]
 
         if (dictionary.determiners.indexOf(substr) >= 0) { // if string is a determiner
             tokens.push({ "part": "D", "string": substr });
-            match = true
         } else if (dictionary.adjectives.indexOf(substr) >= 0) { // if string is an adjective
             tokens.push({ "part": "A", "string": substr });
-            match = true
-        } else if (dictionary.nouns.indexOf(substr) >= 0 || substr.match(/^\".*\"$/)) { // if string is a noun
+        } else if (dictionary.nouns.indexOf(substr) >= 0) { // if string is a noun
             tokens.push({ "part": "N", "string": substr });
-            match = true
         } else if (dictionary.prepositions.indexOf(substr) >= 0) { // if string is a preposition
             tokens.push({ "part": "P", "string": substr });
-            match = true
         } else if (dictionary.verbs.indexOf(substr) >= 0) { // if string is a verb
             tokens.push({ "part": "V", "string": substr });
-            match = true
-        }
-
-        if (match) {
-            text = text.substring(i, text.length).trim()
-            i = text.length + 1
-            match = false
         }
     }
 
@@ -266,11 +282,16 @@ function parser(tokens) {
     var lastValidPhrase = null
     var combinedList = [tokens[tokens.length - 1]]
     var i = tokens.length - 1
+    var counter = 0
     while (combinedList[0]) {
         var VPattempt = parseVerbPhrase(combinedList)
         var NPattempt = parseNounPhrase(combinedList)
         var PPattempt = parsePrepositionalPhrase(combinedList)
         var phraseAttempt = VPattempt || NPattempt || PPattempt
+
+        counter++
+        if (counter > 100) // break out of infinite loop
+            return null
 
         if (phraseAttempt != null) { // tokens in combinedList are a valid phrase
             lastValidPhrase = phraseAttempt // save that phrase as the current best
@@ -406,6 +427,8 @@ function invoke(command, sender, world) {
             case "walk":
                 if (command.NP) {
                     move(sender, command.NP.N.string)
+                } else {
+                    sender.notify("Where are you going?")
                 }
                 break
             case "e":
@@ -421,9 +444,17 @@ function invoke(command, sender, world) {
                 move(sender, "west")
                 break
             case "take":
-            case "pick up":
                 if (command.NP) {
                     take(sender, command.NP.N.string)
+                } else {
+                    sender.notify("What are you taking?")
+                }
+                break
+            case "pick":
+                if (command.PP && command.PP.P && command.PP.P.string == "up" && command.PP.NP) {
+                    take(sender, command.PP.NP.N.string)
+                } else {
+                    sender.notify("What are you taking?")
                 }
                 //TODO: differentiate between items and players
                 break
@@ -431,13 +462,22 @@ function invoke(command, sender, world) {
             case "leave":
                 if (command.NP) {
                     drop(sender, command.NP.N.string)
+                } else {
+                    sender.notify("What are you dropping?")
                 }
+                break
             case "stab":
                 if (command.NP && command.NP.PP && command.NP.PP.NP) {
-                    attack(sender, command.NP.N.string, command.NP.PP.NP.N.string)
-                }
-                //TODO: fix blank response when input is wrong
-                //TODO: infinite loop somewhere when typing "stabb player" instead of "stab"?
+                    var checkName = world.getPlayerNames().filter((name) => { return name == command.NP.N.string })
+                    if (checkName.length > 0)
+                        attack(sender, command.NP.N.string, command.NP.PP.NP.N.string)
+                    else
+                        sender.notify("Cannot attack " + command.NP.N.string + ".")
+                } else if (!command.NP) {
+                    sender.notify("What are you attacking?")
+                } else if (!command.PP) {
+                    sender.notify("With what?")
+                } 
                 break
             case "look":
             case "description":
@@ -456,6 +496,7 @@ function invoke(command, sender, world) {
             default:
                 sender.notify("that command has not been programmed yet")
         }
+        //TODO: fix blank response
     }
 }
 
@@ -472,10 +513,10 @@ function move(sender, direction) {
         // notify & note other players
         var otherPlayersInRoom = world.getPlayersInRoom(sender.room).filter((player) => { return player.name != sender.name })
         if (otherPlayersInRoom.length > 0) { // if there are other players in the room
-            message = message + "\n" + "players already here:"
+            message = message + ", Players in area:"
             otherPlayersInRoom.forEach((player) => {
                 message = message + " " + player.name
-                player.notify(sender.name + " has entered")
+                player.notify(sender.name + " has entered the area.")
             })
         }
 
@@ -485,20 +526,25 @@ function move(sender, direction) {
         // update other room's players that the sender has left
         var playersInOtherRoom = world.getPlayersInRoom(previousRoom)
         playersInOtherRoom.forEach((player) => {
-            player.notify(sender.name + " has departed to the " + direction)
+            player.notify(sender.name + " has departed to the " + direction + ".")
         })
     } else {
-        sender.notify("cannot go " + direction)
+        sender.notify("Cannot go " + direction + ".")
     }
 }
 
 function take(sender, item) {
-    var success = sender.take(item)
+    var checkItem = world.getItemNames().filter((i) => { return i == item })
+    if (checkItem.length > 0) {
+        var success = sender.take(item)
 
-    if (success) {
-        sender.notify("took " + item)
+        if (success) {
+            sender.notify("Took " + item + ".")
+        } else {
+            sender.notify(item + " not in area.")
+        }
     } else {
-        sender.notify(item + " not in room")
+        sender.notify("You can only take items.")
     }
 }
 
@@ -506,20 +552,25 @@ function drop(sender, item) {
     var success = sender.drop(item)
 
     if (success) {
-        sender.notify("dropped " + item)
+        sender.notify("Dropped " + item + ".")
     } else {
-        sender.notify("you have no such items to drop")
+        sender.notify("You have no such item to drop.")
     }
 }
 
 function attack(sender, enemyName, item) {
-    var enemy = world.getPlayerByName(enemyName);
+    var enemy = world.getPlayerByName(enemyName)
 
     var success = sender.attack(enemy, item)
 
     if (success) {
         sender.notify("You stabbed " + enemyName + " with " + item + "!")
         enemy.notify("You were injured by " + sender.name + "!")
+        if (enemy.health <= 0) {
+            die(enemy)
+            enemy.notify("You are dead!")
+            sender.notify("You killed " + enemy.name + "!")
+        }
     } else {
         sender.notify("Attack unsuccessful.")
     }
@@ -539,6 +590,10 @@ function speak(sender, quote, scope, target) {
         }
     }
     // TODO: add yelling & whispering
+}
+
+function die(sender) {
+    var success = sender.die()
 }
 
 ////////////////////////////////////////////////////////////////////////////////
