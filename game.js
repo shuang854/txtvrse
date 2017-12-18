@@ -179,6 +179,17 @@ class World {
         var newPlayer = new Player(name, socket, this.startingRooms[Math.floor(Math.random() * this.startingRooms.length)], [], 3)
         this.players.push(newPlayer)
         newPlayer.notify(this.getRoomById(newPlayer.room).getDescription())
+        
+        // notify & note other players
+        var otherPlayersInRoom = world.getPlayersInRoom(newPlayer.room).filter((player) => { return player.name != newPlayer.name })
+        if (otherPlayersInRoom.length > 0) { // if there are other players in the room
+            var message = "Players in area:"
+            otherPlayersInRoom.forEach((player) => {
+                message = message + " " + player.name
+                player.notify(newPlayer.name + " has entered the area") // tell other player
+            })
+            newPlayer.notify(message) // tell newPlayer
+        }
     }
 
     removePlayer(socketId) {
