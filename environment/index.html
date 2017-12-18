@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>txtvrse</title>
+        
+        <link href="https://fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet">
+        <link rel="stylesheet" href="/environment/resources/styles/terminal.css">
+        
+        <script src="/socket.io/socket.io.js"></script>
+        <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
+    </head>
+    <body>
+        <main id="login">
+            <h1>txtvrse</h1>
+            <form id="userform" action="">
+                <input id="username" type="text" name="username" value="" autofocus placeholder="USERNAME" size="8" maxlength="8" autocomplete="off" pattern="[a-zA-Z]+" required>
+            </form>
+        </main>
+    </body>
+    
+    <script type="text/javascript">
+        $("#userform").submit(() => {
+            var username = $("#username").val()
+            if (validateUsername(username)) {
+                // TODO
+            } else {
+                // TODO
+            }
+        })
+        
+        function validateUsername(username) {
+            // TODO
+        }
+        
+        $("html").click((e) => { $("#username").focus() }) // stop clicks from registering to put focus outside input
+        $(document).ready(() => { $("username").focus() })
+    </script>
+</html>

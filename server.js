@@ -2,22 +2,22 @@ var express = require("express")
 var app = express()
 var http = require("http").Server(app)
 var io = require("socket.io")(http)
-var game = require("./game.js")
+var game = require("./engine/game.js")
 
 ////////////////////////////////////////////////////////////////////////////////
 // ROUTES
 ////////////////////////////////////////////////////////////////////////////////
 
 app.get("/", function(req, res) {
-    res.sendFile(__dirname + "/index.html")
+    res.sendFile(__dirname + "/environment/index.html")
 })
 
-app.get("/game.html", function(req, res) {
-    res.sendFile(__dirname + "/game.html")
+app.get("*", function(req, res) {
+    res.sendFile(__dirname + req.url) // FIXME: doing it this way could be dangerous, should be reworked to have specific directories
 })
 
 ////////////////////////////////////////////////////////////////////////////////
-// WORLD
+// ENVIRONMENT
 ////////////////////////////////////////////////////////////////////////////////
 
 var testworld = require("./worlds/park.json")
@@ -28,19 +28,19 @@ var world = game.loadWorld(testworld)
 ////////////////////////////////////////////////////////////////////////////////
 
 io.on("connection", (socket) => {
-    console.log("a user connected: ", socket.id)
+    console.log("user connected: ", socket.id)
 
     socket.on("disconnect", () => {
-        console.log("a user disconnected: ", socket.id)
-        world.removePlayer(socket.id)
+        console.log("user disconnected: ", socket.id)
     })
 
     socket.on("register", (data) => {
-        world.addPlayer(data.name, socket)
+        console.log("user registered: ", socket.id)
+        world.addPlayer(data.username, socket.id)
     })
 
     socket.on("command", (data) => {
-        game.perform(data.message, socket.id, world)
+        // TODO
     })
 })
 
