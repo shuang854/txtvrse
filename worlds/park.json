@@ -2,6 +2,7 @@
     "name": "city",
     "startingRooms": [0, 2],
     "rooms": [{
+            "id": 0,
             "name": "park gate",
             "description": "You find yourself under a large gate, the entrance to the city park.",
             "doors": [
@@ -14,6 +15,7 @@
             ]
         },
         {
+            "id": 1,
             "name": "work area",
             "description": "You are standing in a work area, there are numerous tools strewn about.",
             "doors": [
@@ -27,6 +29,7 @@
             ]
         },
         {
+            "id": 2,
             "name": "pond",
             "description": "You are at the edge of a small pond, surrounded by reeds.",
             "doors": [
@@ -37,6 +40,7 @@
             "items": []
         },
         {
+            "id": 3,
             "name": "grove",
             "description": "You are in the park grove. There are tall trees all around you. You hear a few birds chirping.",
             "doors": [
@@ -47,6 +51,7 @@
             "items": []
         },
         {
+            "id": 4,
             "name": "shed",
             "description": "You are in an old, worn down shed. It smells pretty musty.",
             "doors": [
@@ -55,6 +60,7 @@
             "items": []
         },
         {
+            "id": 5,
             "name": "lake shore",
             "description": "You are standing on the shore of a medium sized lake. You think you can see some fish down in the rocks.",
             "doors": [

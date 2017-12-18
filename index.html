@@ -15,7 +15,7 @@
         <p id="u">Username:</p>
         <p id="error"><br></p>
         <form id="user" action="">
-            <input id="username" autocomplete="off" /><button id="sub">Submit</button>
+            <input id="username" autocomplete="off" placeholder="USERNAME" autofocus maxlength="8" /><button id="sub">Submit</button>
         </form>
     </div>
 
@@ -34,21 +34,18 @@
     $("#game").hide()
     
     $("#user").submit(() => {
-        var nameInput = $("#username").val()
-
-        if (nameInput == "") {
-            $("#error").text("Input a valid username.")
-            return false
-        } else if (nameInput.length > 10) {
-            $("#error").text("Max 10 characters.")
-            $("#username").val("")
-            return false
-        }
-
-        socket.emit("register", { "name": nameInput })
-        $("#game").show()
-        $("#intro").hide()
+        var nameInput = $("#username").val() // get name
+        socket.emit("register", { "name": nameInput }) // attempt registration
         return false // don't refresh page
+    })
+    
+    socket.on("registered", () => { // upon registration success
+        $("#game").show() // show the game UI
+        $("#intro").hide() // hide the intro UI
+    })
+    
+    socket.on("rejected", (data) => { // upon registration failure
+        $("#error").text(data.reason) // show reason
     })
     
     // MESSAGING

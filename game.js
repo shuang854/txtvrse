@@ -223,8 +223,7 @@ function loadWorld(json) {
     var itemList = []
 
     world = new World(json.name, json.startingRooms, json.rooms.map((room) => {
-        roomIdCounter++
-        return new Room(roomIdCounter - 1, room.name, room.description, room.doors.map((door) => {
+        return new Room(room.id, room.name, room.description, room.doors.map((door) => {
             return new Door(door.direction, door.room)
         }), room.items.map((item) => {
             itemNames.add(item.name)
@@ -273,7 +272,7 @@ function lexer(text, dictionary) {
             tokens.push({ "part": "V", "string": substr });
         }
     }
-
+    
     return tokens
 }
 
