@@ -257,9 +257,9 @@ function loadWorld(json) {
 defaultDictionary = {
     "determiners": [],
     "adjectives": [],
-    "nouns": ["north", "east", "south", "west"],
+    "nouns": ["north", "east", "south", "west", "health", "inventory"],
     "prepositions": ["with", "to", "up"],
-    "verbs": ["go", "move", "walk", "e", "n", "s", "w", "take", "pick", "drop", "leave", "stab", "look", "description", "say"]
+    "verbs": ["go", "move", "walk", "e", "n", "s", "w", "i", "l", "take", "pick", "drop", "leave", "stab", "look", "description", "say", "show", "grab"]
 }
 
 
@@ -453,6 +453,7 @@ function invoke(command, sender, world) {
             case "w":
                 move(sender, "west")
                 break
+            case "grab":
             case "take":
                 if (command.NP) {
                     take(sender, command.NP.N.string)
@@ -489,6 +490,7 @@ function invoke(command, sender, world) {
                     sender.notify("With what?")
                 } 
                 break
+            case "l":
             case "look":
             case "description":
                 sender.notify(world.getRoomById(sender.room).getDescription())
@@ -503,6 +505,29 @@ function invoke(command, sender, world) {
                     speak(sender, command.NP.N.string, "local", target)
                 }
                 break
+            case "show":
+                if (command.NP) {
+                    switch (command.NP.N.string) {
+                        case "inventory":
+                            if (sender.inventory.length < 1) {
+                                sender.notify("your inventory is currently empty")
+                            } else {
+                                sender.notify("your current inventory: " + sender.inventory.map((item) => { return item.name }).join(", "))
+                            }
+                            break;
+                        case "health":
+                            sender.notify("your current health: " + sender.health)
+                            break;
+                    }
+                }
+                break;
+            case "i":
+                if (sender.inventory.length < 1) {
+                    sender.notify("your inventory is currently empty")
+                } else {
+                    sender.notify("your current inventory: " + sender.inventory.map((item) => { return item.name }).join(", "))
+                }
+                break;
             default:
                 sender.notify("that command has not been programmed yet")
         }
