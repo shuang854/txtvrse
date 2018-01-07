@@ -14,26 +14,29 @@
         <main id="login">
             <h1>txtvrse</h1>
             <form id="userform" action="">
-                <input id="username" type="text" name="username" value="" autofocus placeholder="USERNAME" size="8" maxlength="8" autocomplete="off" pattern="[a-zA-Z]+" required>
+                <input id="username" type="text" name="username" value="" autofocus placeholder="USERNAME" size="8" maxlength="8" autocomplete="off" required>
             </form>
+            <span id="invalid"></span>
         </main>
     </body>
     
     <script type="text/javascript">
+        var socket = io()
+        
         $("#userform").submit(() => {
-            var username = $("#username").val()
-            if (validateUsername(username)) {
-                // TODO
-            } else {
-                // TODO
+            socket.emit("register", {"username": $("#username").val()}) // attempt to register
+            return false
+        })
+        
+        socket.on("registrationResult", (data) => {
+            if (data["valid"]) { // regisered
+                window.location.replace("./game.html")
+            } else { // registration failed
+                $("#invalid").html(data["reason"])
             }
         })
         
-        function validateUsername(username) {
-            // TODO
-        }
-        
         $("html").click((e) => { $("#username").focus() }) // stop clicks from registering to put focus outside input
-        $(document).ready(() => { $("username").focus() })
+        $(document).ready(() => { $("username").focus() }) // focus on the input right away
     </script>
 </html>

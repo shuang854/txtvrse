@@ -1,3 +1,7 @@
+
+
+////////////////////////////////////////////////////////////////////////////////
+
 class Room {
     constructor(id, name, description, doors, items) {
         this.id = id // unique
@@ -187,4 +191,16 @@ class World {
     getItemNames() {
         return this.items.map((item) => { return item.name })
     }
+    
+    getReservedWords() {
+        return world.dictionary["determiners"] + world.dictionary["adjectives"] + world.dictionary["nouns"] + world.dictionary["prepositions"] + world.dictionary["verbs"] + world.getPlayerNames()
+    }
 }
+
+////////////////////////////////////////////////////////////////////////////////
+
+module.exports.Room = Room
+module.exports.Door = Door
+module.exports.Item = Item
+module.exports.Player = Player
+module.exports.World = World

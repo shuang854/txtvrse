@@ -8,20 +8,24 @@ var game = require("./engine/game.js")
 // ROUTES
 ////////////////////////////////////////////////////////////////////////////////
 
-app.get("/", function(req, res) {
+app.get("/", (req, res, next) => {
     res.sendFile(__dirname + "/environment/index.html")
 })
 
-app.get("*", function(req, res) {
+app.get("/game.html", (req, res, next) => {
+    res.sendFile(__dirname + "/environment/game.html")
+})
+
+app.get("*", (req, res, next) => {
     res.sendFile(__dirname + req.url) // FIXME: doing it this way could be dangerous, should be reworked to have specific directories
 })
 
 ////////////////////////////////////////////////////////////////////////////////
-// ENVIRONMENT
+// LOAD WORLD
 ////////////////////////////////////////////////////////////////////////////////
 
-var testworld = require("./worlds/park.json")
-var world = game.loadWorld(testworld)
+var worlddata = require("./worlds/park.json")
+var world = game.loadWorld(worlddata)
 
 ////////////////////////////////////////////////////////////////////////////////
 // SOCKET CONNECTIONS
@@ -32,11 +36,17 @@ io.on("connection", (socket) => {
 
     socket.on("disconnect", () => {
         console.log("user disconnected: ", socket.id)
+        // TODO: remove player from world
     })
 
     socket.on("register", (data) => {
-        console.log("user registered: ", socket.id)
-        world.addPlayer(data.username, socket.id)
+        result = game.validateUsername(data.username, world)
+        console.log(result)
+        if (result["valid"]) { // username valid
+            world.addPlayer(data.username, socket)
+            console.log("user registered: ", socket.id)
+        }
+        socket.emit("registrationResult", result)
     })
 
     socket.on("command", (data) => {
