@@ -45,7 +45,12 @@ io.on("connection", (socket) => {
     })
 
     socket.on("command", (data) => {
-        game.perform(data.message, socket.id, world)
+        var sender = world.getPlayerBySocketId(socket.id)
+        if (sender) { // user is still connected
+            game.perform(data.message, sender, world)
+        } else { // user has disconnected
+            socket.emit("notification", {"message": "your connection has been lost, please refresh the page"})
+        }
     })
 })
 

@@ -36,6 +36,8 @@
         var socket = io()
         var username = undefined
         var commandHistory = []
+        var commandIndex = -1
+        var currentCommand = ""
         
         $("html").click((e) => { username ? $("#prompt").focus() : $("#username").focus() }) // stop clicks from registering to put focus outside input
         
@@ -67,17 +69,57 @@
         ////////////////////////////////////////////////////////////////////////////////
         
         $("#gameform").submit((e) => {
-            var message = $("#prompt").val()
-            socket.emit("command", {"message": message})
-            commandHistory.push(message)
-            $("#messages").append($("<li>").text(message))
+            var command = $("#prompt").val()
+            if (command != "") {
+                socket.emit("command", {"message": command})
+                if (command != commandHistory[0]) {
+                    commandHistory.unshift(command)
+                }
+            }
+            $("#messages").append($("<li>").attr("class", "c").text(command))
             $("#prompt").val("") // clear input
             return false // don't refresh page
         })
         
         socket.on("notification", (data) => {
             $("#messages").append($("<li>").text(data.message.replace(/\n/g, "<br />")))
+            if (data.message == ":! clear") { clearScreen() }
             $("#messages").scrollTop($("#messages").prop("scrollHeight")) // auto scroll
+            $(window).scrollTop($(document).height())
+        })
+        
+        function clearScreen() {
+            $("#messages").empty()
+        }
+        
+        $(document).keydown((e) => {
+            if (commandIndex == -1) {
+                currentCommand = $("#prompt").val()
+            }
+            
+            var keycode = e.keyCode ? e.keyCode : e.which
+            switch (keycode) {
+                case 38: // up pressed
+                    if (commandIndex < commandHistory.length-1) {
+                        commandIndex += 1
+                        $("#prompt").val(commandHistory[commandIndex])
+                    }
+                    break
+                case 40: // down pressed
+                    if (0 < commandIndex) {
+                        commandIndex -= 1
+                        $("#prompt").val(commandHistory[commandIndex])
+                    } else { // commandIndex == 0
+                        commandIndex = -1
+                        $("#prompt").val(currentCommand)
+                    }
+                    break
+                case 9: // tab pressed
+                    e.preventDefault() // don't move focus
+                    console.log("TAB!")
+                    // TODO
+                    break
+            }
         })
     </script>
 </html>

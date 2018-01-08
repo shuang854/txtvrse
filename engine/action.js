@@ -185,20 +185,23 @@ function invoke(command, sender, world) {
                             } else {
                                 sender.notify("your current inventory: " + sender.inventory.map((item) => { return item.name }).join(", "))
                             }
-                            break;
+                            break
                         case "health":
                             sender.notify("your current health: " + sender.health)
-                            break;
+                            break
                     }
                 }
-                break;
+                break
             case "i":
                 if (sender.inventory.length < 1) {
                     sender.notify("your inventory is currently empty")
                 } else {
                     sender.notify("your current inventory: " + sender.inventory.map((item) => { return item.name }).join(", "))
                 }
-                break;
+                break
+            case "clear":
+                sender.notify(":! clear")
+                break
             default:
                 sender.notify("that command has not been programmed yet")
         }

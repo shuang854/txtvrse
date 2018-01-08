@@ -64,6 +64,6 @@ label[for="prompt"]::before {
     padding: 0;
 }
 
-#messages li::before {
+#messages li.c::before {
     content: "> ";
 }

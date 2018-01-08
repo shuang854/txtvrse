@@ -42,8 +42,7 @@ function validateUsername(name, world) {
     return {"valid": true}
 }
 
-function perform(message, socketId, world) {
-    var sender = world.getPlayerBySocketId(socketId)
+function perform(message, sender, world) {
     var command = parser.parse(message, world.dictionary)
     if (!command) { // if the command could not be parsed
         sender.notify("command could not be parsed")

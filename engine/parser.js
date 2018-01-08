@@ -8,7 +8,9 @@ defaultDictionary = {
     "adjectives": [],
     "nouns": ["north", "east", "south", "west", "health", "inventory"],
     "prepositions": ["with", "to", "up"],
-    "verbs": ["go", "move", "walk", "e", "n", "s", "w", "i", "l", "take", "pick", "drop", "leave", "stab", "look", "description", "say", "show", "grab"]
+    "verbs": ["go", "move", "walk", "e", "n", "s", "w", "i", "l", "take", 
+        "pick", "drop", "leave", "stab", "look", "description", "say", "show", 
+        "grab", "clear"]
 }
 
 
@@ -21,15 +23,15 @@ function lexer(text, dictionary) {
         var substr = text[i]
 
         if (dictionary.determiners.indexOf(substr) >= 0) { // if string is a determiner
-            tokens.push({ "part": "D", "string": substr });
+            tokens.push({ "part": "D", "string": substr })
         } else if (dictionary.adjectives.indexOf(substr) >= 0) { // if string is an adjective
-            tokens.push({ "part": "A", "string": substr });
+            tokens.push({ "part": "A", "string": substr })
         } else if (dictionary.nouns.indexOf(substr) >= 0) { // if string is a noun
-            tokens.push({ "part": "N", "string": substr });
+            tokens.push({ "part": "N", "string": substr })
         } else if (dictionary.prepositions.indexOf(substr) >= 0) { // if string is a preposition
-            tokens.push({ "part": "P", "string": substr });
+            tokens.push({ "part": "P", "string": substr })
         } else if (dictionary.verbs.indexOf(substr) >= 0) { // if string is a verb
-            tokens.push({ "part": "V", "string": substr });
+            tokens.push({ "part": "V", "string": substr })
         }
     }
     
