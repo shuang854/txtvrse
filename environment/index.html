@@ -70,7 +70,8 @@
             var message = $("#prompt").val()
             socket.emit("command", {"message": message})
             commandHistory.push(message)
-            $("#prompt").val("")
+            $("#messages").append($("<li>").text(message))
+            $("#prompt").val("") // clear input
             return false // don't refresh page
         })
         

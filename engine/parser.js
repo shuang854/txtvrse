@@ -6,9 +6,9 @@
 defaultDictionary = {
     "determiners": [],
     "adjectives": [],
-    "nouns": ["north", "east", "south", "west"],
+    "nouns": ["north", "east", "south", "west", "health", "inventory"],
     "prepositions": ["with", "to", "up"],
-    "verbs": ["go", "move", "walk", "e", "n", "s", "w", "take", "pick", "drop", "leave", "stab", "look", "description", "say"]
+    "verbs": ["go", "move", "walk", "e", "n", "s", "w", "i", "l", "take", "pick", "drop", "leave", "stab", "look", "description", "say", "show", "grab"]
 }
 
 
@@ -32,7 +32,7 @@ function lexer(text, dictionary) {
             tokens.push({ "part": "V", "string": substr });
         }
     }
-
+    
     return tokens
 }
 
@@ -173,8 +173,7 @@ function parsePrepositionalPhrase(tokens) {
 }
 
 function parse(string, dictionary) {
-    ts = lexer(string, dictionary)
-    c = parser(ts)
+    return parser(lexer(string, dictionary))
 }
 
 ////////////////////////////////////////////////////////////////////////////////

@@ -42,7 +42,18 @@ function validateUsername(name, world) {
     return {"valid": true}
 }
 
+function perform(message, socketId, world) {
+    var sender = world.getPlayerBySocketId(socketId)
+    var command = parser.parse(message, world.dictionary)
+    if (!command) { // if the command could not be parsed
+        sender.notify("command could not be parsed")
+    } else {
+        action.invoke(command, sender, world)
+    }
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 
 module.exports.loadWorld = loadWorld
 module.exports.validateUsername = validateUsername
+module.exports.perform = perform

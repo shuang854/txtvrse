@@ -45,8 +45,7 @@ io.on("connection", (socket) => {
     })
 
     socket.on("command", (data) => {
-        console.log("recieved command: ", data)
-        // TODO
+        game.perform(data.message, socket.id, world)
     })
 })
 
