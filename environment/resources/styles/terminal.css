@@ -18,7 +18,7 @@ input {
     font-family: "Source Code Pro", monospace;
 }
 
-/* ---- LOGIN PAGE ---------------------------------------------------------- */
+/* ---- LOGIN --------------------------------------------------------------- */
 
 #login {
     width: 100%;
@@ -29,7 +29,7 @@ input {
     vertical-align: middle;
 }
 
-#login h1 {
+#title {
     font-size: 3em;
 }
 
@@ -41,4 +41,29 @@ input {
     font-size: 1em;
 }
 
-/* ---- GAME PAGE ----------------------------------------------------------- */
+/* ---- GAME ---------------------------------------------------------------- */
+
+#prompt, #game {
+    font-size: 1em;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+}
+
+label[for="prompt"]::before {
+    content: "> ";
+}
+
+#gameform {
+    white-space: nowrap;
+}
+
+#messages {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+}
+
+#messages li::before {
+    content: "> ";
+}

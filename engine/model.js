@@ -193,7 +193,7 @@ class World {
     }
     
     getReservedWords() {
-        return world.dictionary["determiners"] + world.dictionary["adjectives"] + world.dictionary["nouns"] + world.dictionary["prepositions"] + world.dictionary["verbs"] + world.getPlayerNames()
+        return world.dictionary["determiners"] + world.dictionary["adjectives"] + world.dictionary["nouns"] + world.dictionary["prepositions"] + world.dictionary["verbs"]
     }
 }
 

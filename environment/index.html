@@ -5,38 +5,78 @@
         <title>txtvrse</title>
         
         <link href="https://fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet">
-        <link rel="stylesheet" href="/environment/resources/styles/terminal.css">
+        <link id="theme" rel="stylesheet" href="/environment/resources/styles/terminal.css">
+        <!-- TODO: make settings that can change the theme if the user wants -->
         
         <script src="/socket.io/socket.io.js"></script>
         <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
     </head>
     <body>
-        <main id="login">
-            <h1>txtvrse</h1>
-            <form id="userform" action="">
-                <input id="username" type="text" name="username" value="" autofocus placeholder="USERNAME" size="8" maxlength="8" autocomplete="off" required>
+        <div id="login">
+            <h1 id="title">txtvrse</h1>
+            <form id="loginform" action="">
+                <input id="username" type="text" placeholder="USERNAME" size="8" maxlength="8" autocomplete="off" />
             </form>
             <span id="invalid"></span>
-        </main>
+        </div>
+        <div id="game">
+            <ul id="messages">
+                
+            </ul>
+            <form id="gameform" action="">
+                <label for="prompt"></label><input id="prompt" type="text" autocomplete="off" />
+            </form>
+        </div>
     </body>
-    
     <script type="text/javascript">
-        var socket = io()
+        ////////////////////////////////////////////////////////////////////////////////
+        // GENERAL SETUP
+        ////////////////////////////////////////////////////////////////////////////////
         
-        $("#userform").submit(() => {
+        var socket = io()
+        var username = undefined
+        var commandHistory = []
+        
+        $("html").click((e) => { username ? $("#prompt").focus() : $("#username").focus() }) // stop clicks from registering to put focus outside input
+        
+        ////////////////////////////////////////////////////////////////////////////////
+        // LOGIN
+        ////////////////////////////////////////////////////////////////////////////////
+        
+        $("#game").hide() // don't show the game right away
+        $(document).ready(() => { $("username").focus() }) // focus on the input right away
+        
+        $("#loginform").submit((e) => {
             socket.emit("register", {"username": $("#username").val()}) // attempt to register
-            return false
+            return false // don't refresh page
         })
         
         socket.on("registrationResult", (data) => {
             if (data["valid"]) { // regisered
-                window.location.replace("./game.html")
+                username = $("#username").val()
+                $("#login").hide()
+                $("#game").show()
+                $("#prompt").focus()
             } else { // registration failed
                 $("#invalid").html(data["reason"])
             }
         })
         
-        $("html").click((e) => { $("#username").focus() }) // stop clicks from registering to put focus outside input
-        $(document).ready(() => { $("username").focus() }) // focus on the input right away
+        ////////////////////////////////////////////////////////////////////////////////
+        // GAME
+        ////////////////////////////////////////////////////////////////////////////////
+        
+        $("#gameform").submit((e) => {
+            var message = $("#prompt").val()
+            socket.emit("command", {"message": message})
+            commandHistory.push(message)
+            $("#prompt").val("")
+            return false // don't refresh page
+        })
+        
+        socket.on("notification", (data) => {
+            $("#messages").append($("<li>").text(data.message.replace(/\n/g, "<br />")))
+            $("#messages").scrollTop($("#messages").prop("scrollHeight")) // auto scroll
+        })
     </script>
 </html>

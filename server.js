@@ -12,10 +12,6 @@ app.get("/", (req, res, next) => {
     res.sendFile(__dirname + "/environment/index.html")
 })
 
-app.get("/game.html", (req, res, next) => {
-    res.sendFile(__dirname + "/environment/game.html")
-})
-
 app.get("*", (req, res, next) => {
     res.sendFile(__dirname + req.url) // FIXME: doing it this way could be dangerous, should be reworked to have specific directories
 })
@@ -36,12 +32,11 @@ io.on("connection", (socket) => {
 
     socket.on("disconnect", () => {
         console.log("user disconnected: ", socket.id)
-        // TODO: remove player from world
+        world.removePlayer(socket.id)
     })
 
     socket.on("register", (data) => {
         result = game.validateUsername(data.username, world)
-        console.log(result)
         if (result["valid"]) { // username valid
             world.addPlayer(data.username, socket)
             console.log("user registered: ", socket.id)
@@ -50,6 +45,7 @@ io.on("connection", (socket) => {
     })
 
     socket.on("command", (data) => {
+        console.log("recieved command: ", data)
         // TODO
     })
 })

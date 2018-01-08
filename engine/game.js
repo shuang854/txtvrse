@@ -32,8 +32,12 @@ function validateUsername(name, world) {
         return {"valid": false, "reason": "username must contain only the characters a-z and A-Z"}
     } else if (name.length > 8) {
         return {"valid": false, "reason": "username must be 8 characters or less"}
+    } else if (name.length == 0) {
+        return {"valid": false, "reason": "must supply a username"}
     } else if (world.getReservedWords().indexOf(name) != -1) {
-        return {"valid": false, "reason": "username is taken or is a reserved word"}
+        return {"valid": false, "reason": "that is a reserved word"}
+    } else if (world.getPlayerNames().indexOf(name) != -1) {
+        return {"valid": false, "reason": "that username is taken"}
     }
     return {"valid": true}
 }
