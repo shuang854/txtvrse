@@ -17,7 +17,7 @@ function move(sender, direction) {
         if (otherPlayersInRoom.length > 0) { // if there are other players in the room
             message = message + "\nPlayers in area:"
             otherPlayersInRoom.forEach((player) => {
-                message = message + " " + player.name
+                message = message + "\n" + player.name
                 player.notify(sender.name + " has entered the area.")
             })
         }

@@ -24,15 +24,14 @@ class Room {
     }
     
     getDescription() {
-        var itemList = "Items in area: "
         if (this.items.length > 0) {
+            var itemList = "Items in area: "
             this.items.map((item) => { itemList = itemList + item.name + ", " })
             itemList = itemList.substr(0, itemList.length - 2)
+            return this.description + "\n" + itemList
         } else {
-            itemList = itemList + "none"
+            return this.description
         }
-        
-        return this.description + " " + itemList
     }
 }
 

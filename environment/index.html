@@ -82,7 +82,7 @@
         })
         
         socket.on("notification", (data) => {
-            $("#messages").append($("<li>").text(data.message.replace(/\n/g, "<br />")))
+            $("#messages").append($("<li>").html(data.message.replace(/\n/g, "<br />")))
             if (data.message == ":! clear") { clearScreen() }
             $("#messages").scrollTop($("#messages").prop("scrollHeight")) // auto scroll
             $(window).scrollTop($(document).height())
@@ -116,8 +116,6 @@
                     break
                 case 9: // tab pressed
                     e.preventDefault() // don't move focus
-                    console.log("TAB!")
-                    // TODO
                     break
             }
         })
