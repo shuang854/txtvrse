@@ -17,34 +17,20 @@ body {
     padding-left: 4px;
 }
 
-#u {
-    font-size: 22px;
-    padding-left: 4px;
-}
-
-#prompt {
+#gameform {
     background: #eee;
     font-size: 16px;
     position: fixed;
     left: 12.5%;
     bottom: 12.5%;
-    width: 75%;
+    right: 12.5%;
 }
 
-#m {
+#prompt {
     font-size: 16px;
     border: 1px solid black;
     padding: 10px;
-    width: calc(100% - 105px);
-    margin-right: 5px;
-}
-
-#send {
-    width: 100px;
-    background: #eee;
-    font-size: 16px;
-    border: 1px solid black;
-    padding: 10px;
+    width: 100%;
 }
 
 #messages {
@@ -72,7 +58,7 @@ body {
     background: white;
 }
 
-#intro {
+#login {
     position: absolute;
     top: 50%;
     left: 50%;
@@ -85,13 +71,7 @@ body {
     border: 1px solid black;
 }
 
-#sub {
-    border: 1px solid black;
-    padding: 5px;
-    margin-left: 5px;
-}
-
-#error {
+#invalid {
     color: red;
     font-size: 22px;
     padding-left: 4px;

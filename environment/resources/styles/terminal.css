@@ -1,0 +1,69 @@
+html {
+    cursor: none;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    background-color: black;
+    color: #00FF00;
+    font-family: "Source Code Pro", monospace;
+}
+
+input {
+    background-color: black;
+    border: none;
+    outline: none;
+    color: #00FF00;
+    font-family: "Source Code Pro", monospace;
+}
+
+/* ---- LOGIN --------------------------------------------------------------- */
+
+#login {
+    width: 100%;
+    height: 100%;
+    align-content: center;
+    justify-content: center;
+    text-align: center;
+    vertical-align: middle;
+}
+
+#title {
+    font-size: 3em;
+}
+
+#username {
+    border-color: #00FF00;
+    border-width: 2px;
+    border-style: solid;
+    padding: 0.5em;
+    font-size: 1em;
+}
+
+/* ---- GAME ---------------------------------------------------------------- */
+
+#prompt, #game {
+    font-size: 1em;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+}
+
+label[for="prompt"]::before {
+    content: "> ";
+}
+
+#gameform {
+    white-space: nowrap;
+}
+
+#messages {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+}
+
+#messages li.c::before {
+    content: "> ";
+}

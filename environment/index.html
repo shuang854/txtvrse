@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>txtvrse</title>
+        
+        <link href="https://fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet">
+        <link id="theme" rel="stylesheet" href="/environment/resources/styles/terminal.css">
+        <!-- TODO: make settings that can change the theme if the user wants -->
+        
+        <script src="/socket.io/socket.io.js"></script>
+        <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
+    </head>
+    <body>
+        <div id="login">
+            <h1 id="title">txtvrse</h1>
+            <form id="loginform" action="">
+                <input id="username" type="text" placeholder="USERNAME" size="8" maxlength="8" autocomplete="off" />
+            </form>
+            <span id="invalid"></span>
+        </div>
+        <div id="game">
+            <ul id="messages">
+                
+            </ul>
+            <form id="gameform" action="">
+                <label for="prompt"></label><input id="prompt" type="text" autocomplete="off" />
+            </form>
+        </div>
+    </body>
+    <script type="text/javascript">
+        ////////////////////////////////////////////////////////////////////////////////
+        // GENERAL SETUP
+        ////////////////////////////////////////////////////////////////////////////////
+        
+        var socket = io()
+        var username = undefined
+        var commandHistory = []
+        var commandIndex = -1
+        var currentCommand = ""
+        
+        $("html").click((e) => { username ? $("#prompt").focus() : $("#username").focus() }) // stop clicks from registering to put focus outside input
+        
+        ////////////////////////////////////////////////////////////////////////////////
+        // LOGIN
+        ////////////////////////////////////////////////////////////////////////////////
+        
+        $("#game").hide() // don't show the game right away
+        $(document).ready(() => { $("username").focus() }) // focus on the input right away
+        
+        $("#loginform").submit((e) => {
+            socket.emit("register", {"username": $("#username").val()}) // attempt to register
+            return false // don't refresh page
+        })
+        
+        socket.on("registrationResult", (data) => {
+            if (data["valid"]) { // regisered
+                username = $("#username").val()
+                $("#login").hide()
+                $("#game").show()
+                $("#prompt").focus()
+            } else { // registration failed
+                $("#invalid").html(data["reason"])
+            }
+        })
+        
+        ////////////////////////////////////////////////////////////////////////////////
+        // GAME
+        ////////////////////////////////////////////////////////////////////////////////
+        
+        $("#gameform").submit((e) => {
+            var command = $("#prompt").val()
+            if (command != "") {
+                socket.emit("command", {"message": command})
+                if (command != commandHistory[0]) {
+                    commandHistory.unshift(command)
+                }
+            }
+            $("#messages").append($("<li>").attr("class", "c").text(command))
+            $("#prompt").val("") // clear input
+            return false // don't refresh page
+        })
+        
+        socket.on("notification", (data) => {
+            $("#messages").append($("<li>").html(data.message.replace(/\n/g, "<br />")))
+            if (data.message == ":! clear") { clearScreen() }
+            $("#messages").scrollTop($("#messages").prop("scrollHeight")) // auto scroll
+            $(window).scrollTop($(document).height())
+        })
+        
+        function clearScreen() {
+            $("#messages").empty()
+        }
+        
+        $(document).keydown((e) => {
+            if (commandIndex == -1) {
+                currentCommand = $("#prompt").val()
+            }
+            
+            var keycode = e.keyCode ? e.keyCode : e.which
+            switch (keycode) {
+                case 38: // up pressed
+                    if (commandIndex < commandHistory.length-1) {
+                        commandIndex += 1
+                        $("#prompt").val(commandHistory[commandIndex])
+                    }
+                    break
+                case 40: // down pressed
+                    if (0 < commandIndex) {
+                        commandIndex -= 1
+                        $("#prompt").val(commandHistory[commandIndex])
+                    } else { // commandIndex == 0
+                        commandIndex = -1
+                        $("#prompt").val(currentCommand)
+                    }
+                    break
+                case 9: // tab pressed
+                    e.preventDefault() // don't move focus
+                    break
+            }
+        })
+    </script>
+</html>

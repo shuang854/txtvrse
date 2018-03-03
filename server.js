@@ -2,26 +2,26 @@ var express = require("express")
 var app = express()
 var http = require("http").Server(app)
 var io = require("socket.io")(http)
-var game = require("./game.js")
+var game = require("./engine/game.js")
 
 ////////////////////////////////////////////////////////////////////////////////
 // ROUTES
 ////////////////////////////////////////////////////////////////////////////////
 
-app.get("/", function(req, res) {
-    res.sendFile(__dirname + "/index.html")
+app.get("/", (req, res, next) => {
+    res.sendFile(__dirname + "/environment/index.html")
 })
 
-app.get("/game.html", function(req, res) {
-    res.sendFile(__dirname + "/game.html")
+app.get("*", (req, res, next) => {
+    res.sendFile(__dirname + req.url) // FIXME: doing it this way could be dangerous, should be reworked to have specific directories
 })
 
 ////////////////////////////////////////////////////////////////////////////////
-// WORLD
+// LOAD WORLD
 ////////////////////////////////////////////////////////////////////////////////
 
-var testworld = require("./worlds/park.json")
-var world = game.loadWorld(testworld)
+var worlddata = require("./worlds/park.json")
+var world = game.loadWorld(worlddata)
 
 ////////////////////////////////////////////////////////////////////////////////
 // SOCKET CONNECTIONS
@@ -36,6 +36,7 @@ io.on("connection", (socket) => {
     })
 
     socket.on("register", (data) => {
+<<<<<<< HEAD
         var result = validateUsername(data.name)
         if (result == "success") {
             console.log("user registered: ", socket.id)
@@ -44,10 +45,23 @@ io.on("connection", (socket) => {
         } else {
             socket.emit("rejected", {"reason": result})
         }
+=======
+        result = game.validateUsername(data.username, world)
+        if (result["valid"]) { // username valid
+            world.addPlayer(data.username, socket)
+            console.log("user registered: ", socket.id)
+        }
+        socket.emit("registrationResult", result)
+>>>>>>> reorganization
     })
 
     socket.on("command", (data) => {
-        game.perform(data.message, socket.id, world)
+        var sender = world.getPlayerBySocketId(socket.id)
+        if (sender) { // user is still connected
+            game.perform(data.message, sender, world)
+        } else { // user has disconnected
+            socket.emit("notification", {"message": "your connection has been lost, please refresh the page"})
+        }
     })
 })
 
