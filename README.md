@@ -10,3 +10,4 @@ Multiplayer text-based game
 - Make the location tell you what direction you came from
 - Make each item talk about itself if it's in the area (something if you know it's new or if you've seen it before)
 - Make the location descriptions different for new vs. visited as well.
+- Make a quit/exit function
