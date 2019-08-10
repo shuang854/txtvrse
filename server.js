@@ -36,23 +36,12 @@ io.on("connection", (socket) => {
     })
 
     socket.on("register", (data) => {
-<<<<<<< HEAD
-        var result = validateUsername(data.name)
-        if (result == "success") {
-            console.log("user registered: ", socket.id)
-            world.addPlayer(data.name, socket)
-            socket.emit("registered")
-        } else {
-            socket.emit("rejected", {"reason": result})
-        }
-=======
         result = game.validateUsername(data.username, world)
         if (result["valid"]) { // username valid
             world.addPlayer(data.username, socket)
             console.log("user registered: ", socket.id)
         }
         socket.emit("registrationResult", result)
->>>>>>> reorganization
     })
 
     socket.on("command", (data) => {
@@ -85,6 +74,6 @@ function validateUsername(name) {
 // RUN SERVER
 ////////////////////////////////////////////////////////////////////////////////
 
-var port = process.env.PORT || 3001
+var port = process.env.PORT || 4321
 
 http.listen(port, () => { console.log("Server launched on port " + port + " at " + (new Date).toUTCString()) })
